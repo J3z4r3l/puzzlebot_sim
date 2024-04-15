@@ -46,32 +46,23 @@ class Simulation:
                 result += 2 * np.pi
            return result - np.pi
      
-     ##Ponemos la posicion de nuestros nodos 
-     def init_joints(self):
-          self.msg=JointState()
-          self.msg.header.frame_id= "link1"
-          self.msg.header.stamp= rospy.Time.now()
-          self.msg.name.extend(["joint2"])
-          self.msg.position.extend([0.0])
-          self.msg.velocity.extend([0.0])
-          self.msg.effort.extend([0.0])
      
      def pose_stamped(self):
           self._pwr=PoseStamped()
           ##Nombre del link de la rueda y sus componentes cercanos
-          self._pwr.header.seq = 1
+          #self._pwr.header.seq = 1
           self._pwr.header.stamp = rospy.Time.now()
-          self._pwr.header.frame_id = 'wheel1'
-          self._pwr.pose.position.x = 00.00
-          self._pwr.pose.position.y = 00.00
-          self._pwr.pose.position.z = 00.00
-          self._pwr.pose.orientation.x = 00.00
-          self._pwr.pose.orientation.x = 00.00
-          self._pwr.pose.orientation.x = 00.00
+          self._pwr.header.frame_id = "wheel1"
+          self._pwr.pose.position.x = 1.5
+          self._pwr.pose.position.y = -1.50
+          self._pwr.pose.position.z = 0.00
+          self._pwr.pose.orientation.x = 00.052
+          self._pwr.pose.orientation.y = 00.0972
+          self._pwr.pose.orientation.z = 00.00
           self._pwr.pose.orientation.w = 00.00
           
           self._pwl=PoseStamped()
-          ##Nombre del link de la rueda y sus componentes cercanos
+        ##Nombre del link de la rueda y sus componentes cercanos
           self._pwl.header.seq = 1
           self._pwl.header.stamp = rospy.Time.now()
           self._pwl.header.frame_id = 'wheel2'
@@ -79,28 +70,29 @@ class Simulation:
           self._pwl.pose.position.y = 00.00
           self._pwl.pose.position.z = 00.00
           self._pwl.pose.orientation.x = 00.00
-          self._pwl.pose.orientation.x = 00.00
-          self._pwl.pose.orientation.x = 00.00
+          self._pwl.pose.orientation.y = 00.00
+          self._pwl.pose.orientation.z = 00.00
           self._pwl.pose.orientation.w = 00.00
           
 
      
      def simulate(self):
-          self.init_joints()
+          self.pose_stamped()
 
           while not rospy.is_shutdown():
               current_time = rospy.Time.now().to_sec()  # Get current time
+              self.pub_pose.publish(self._pwr)
 
-              if self.first:
-                  self.previous_time = current_time
-                  self.first = False
-              else:
-                  dt = current_time - self.previous_time  # Calculate time difference
-                  self.previous_time = current_time
+#              if self.first:
+#                  self.previous_time = current_time
+#                  self.first = False
+#              else:
+#                  dt = current_time - self.previous_time  # Calculate time difference
+#                  self.previous_time = current_time
                   
                   
-                  #self.pub_custom_joint_state.publish(self.msg)
-                  self.loop_rate.sleep()
+                  
+              self.loop_rate.sleep()
 
 if __name__=='__main__':
     pendulum=Simulation()
