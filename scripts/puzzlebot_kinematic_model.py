@@ -9,7 +9,7 @@ from geometry_msgs.msg import Twist, PoseStamped
 class Simulation:
      def __init__(self):
           #Initialize
-          rospy.init_node("sim")
+          rospy.init_node("puzz_sim")
           self.loop_rate = rospy.Rate(rospy.get_param("~node_rate",100))
          
           #Parameters
@@ -22,19 +22,20 @@ class Simulation:
           ##Publishers 
           self.pub_ = rospy.Publisher('/joint_states', JointState, queue_size=10)         
           self.pub_pose = rospy.Publisher('/pose', PoseStamped, queue_size=10)         
-          self.vel_sub = rospy.Subscriber('/cmd_vel',Twist,self.twist_callback)
-
+          rospy.Subscriber('/cmd_vel',Twist,self.twist_callback)
+          self.wr=rospy.Publisher("/wr",Float32,queue_size=10)
+          self.wl=rospy.Publisher("/wl",Float32,queue_size=10)
         
 
     #wrap to pi function
      def twist_callback(self,msg):
           self.msg_t = Twist()
-          self.msg_t.linear.x = 0.0
-          self.msg_t.linear.y = 0.0
-          self.msg_t.linear.z = 0.0
-          self.msg_t.angular.x = 0.0
-          self.msg_t.angular.y = 0.0
-          self.msg_t.angular.z = 0.0
+          self.msg_t.linear.x         
+          self.msg_t.linear.y           
+          self.msg_t.linear.z           
+          self.msg_t.angular.x
+          self.msg_t.angular.y
+          self.msg_t.angular.z
 
     
    
@@ -69,21 +70,21 @@ class Simulation:
               else:
                   dt = current_time - self.previous_time  # Calculate time difference
                   self.previous_time = current_time
-                  self.x1 += self.x2 * dt
-                  self.x2_dot = (1 / self.j) * (self.tao - self.m * self.g * self.a * np.cos(self.x1) - self.k * self.x2)
-                  self.x2 += self.x2_dot*dt
-
-                  # Update message
-                  self.msg.header.stamp = rospy.Time.now()
-                  self.msg.position[0] = self.wrap_to_Pi(self.x1)
-                  self.msg.velocity[0] = self.x2
-                  self.pub_custom_joint_state.publish(self.msg)
-                  self.loop_rate.sleep()
+                  #self.x1 += self.x2 * dt
+                  #self.x2_dot = (1 / self.j) * (self.tao - self.m * self.g * self.a * np.cos(self.x1) - self.k * self.x2)
+                  #self.x2 += self.x2_dot*dt
+#
+                  ## Update message
+                  #self.msg.header.stamp = rospy.Time.now()
+                  #self.msg.position[0] = self.wrap_to_Pi(self.x1)
+                  #self.msg.velocity[0] = self.x2
+                  #self.pub_custom_joint_state.publish(self.msg)
+                  #self.loop_rate.sleep()
 
 if __name__=='__main__':
     pendulum=Simulation()
     try:
-         ##pendulum.simulate()
+         pendulum.simulate()
          pass
                     
     except rospy.ROSInterruptException:
