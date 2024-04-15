@@ -55,6 +55,33 @@ class Simulation:
           self.msg.position.extend([0.0])
           self.msg.velocity.extend([0.0])
           self.msg.effort.extend([0.0])
+     
+     def pose_stamped(self):
+          self._pwr=PoseStamped()
+          ##Nombre del link de la rueda y sus componentes cercanos
+          self._pwr.header.seq = 1
+          self._pwr.header.stamp = rospy.Time.now()
+          self._pwr.header.frame_id = 'wheel1'
+          self._pwr.pose.position.x = 00.00
+          self._pwr.pose.position.y = 00.00
+          self._pwr.pose.position.z = 00.00
+          self._pwr.pose.orientation.x = 00.00
+          self._pwr.pose.orientation.x = 00.00
+          self._pwr.pose.orientation.x = 00.00
+          self._pwr.pose.orientation.w = 00.00
+          
+          self._pwl=PoseStamped()
+          ##Nombre del link de la rueda y sus componentes cercanos
+          self._pwl.header.seq = 1
+          self._pwl.header.stamp = rospy.Time.now()
+          self._pwl.header.frame_id = 'wheel2'
+          self._pwl.pose.position.x = 00.00
+          self._pwl.pose.position.y = 00.00
+          self._pwl.pose.position.z = 00.00
+          self._pwl.pose.orientation.x = 00.00
+          self._pwl.pose.orientation.x = 00.00
+          self._pwl.pose.orientation.x = 00.00
+          self._pwl.pose.orientation.w = 00.00
           
 
      
