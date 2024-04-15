@@ -70,16 +70,10 @@ class Simulation:
               else:
                   dt = current_time - self.previous_time  # Calculate time difference
                   self.previous_time = current_time
-                  #self.x1 += self.x2 * dt
-                  #self.x2_dot = (1 / self.j) * (self.tao - self.m * self.g * self.a * np.cos(self.x1) - self.k * self.x2)
-                  #self.x2 += self.x2_dot*dt
-#
-                  ## Update message
-                  #self.msg.header.stamp = rospy.Time.now()
-                  #self.msg.position[0] = self.wrap_to_Pi(self.x1)
-                  #self.msg.velocity[0] = self.x2
+                  
+                  
                   #self.pub_custom_joint_state.publish(self.msg)
-                  #self.loop_rate.sleep()
+                  self.loop_rate.sleep()
 
 if __name__=='__main__':
     pendulum=Simulation()
