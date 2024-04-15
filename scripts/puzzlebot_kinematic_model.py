@@ -3,7 +3,7 @@ import rospy
 import numpy as np
 from std_msgs.msg import Float32
 from sensor_msgs.msg import JointState
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, PoseStamped
 
 
 class Simulation:
@@ -20,19 +20,24 @@ class Simulation:
 
           self.first=True
           ##Publishers 
-          self.pub_custom_joint_state = rospy.Publisher('/joint_states', JointState, queue_size=10)         
-          self.pose_pub = rospy.Subscriber('/cmd_vel',Twist,queue_size=10)
+          self.pub_ = rospy.Publisher('/joint_states', JointState, queue_size=10)         
+          self.pub_pose = rospy.Publisher('/pose', PoseStamped, queue_size=10)         
+          self.vel_sub = rospy.Subscriber('/cmd_vel',Twist,self.twist_callback)
 
+        
+
+    #wrap to pi function
+     def twist_callback(self,msg):
           self.msg_t = Twist()
-          self.msg_t.linear.x = 0
-          self.msg_t.linear.y = 0
-          self.msg_t.linear.z = 0
-          self.msg_t.angular.x = 0
-          self.msg_t.angular.y = 0
-          self.msg_t.angular.z = 0
+          self.msg_t.linear.x = 0.0
+          self.msg_t.linear.y = 0.0
+          self.msg_t.linear.z = 0.0
+          self.msg_t.angular.x = 0.0
+          self.msg_t.angular.y = 0.0
+          self.msg_t.angular.z = 0.0
 
-
-
+    
+   
     #wrap to pi function
      def wrap_to_Pi(self,theta):
            result = np.fmod((theta + np.pi),(2 * np.pi))
