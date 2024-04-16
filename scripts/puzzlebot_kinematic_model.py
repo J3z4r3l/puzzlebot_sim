@@ -16,20 +16,21 @@ class Simulation:
           self.radius=5.00
           self.wheelbase=19.00
           self.first=True
+          self.x_l=0.0
+          self.y_l=0.0
+          self.z_a=0.0
 
-          ##Publishers 
+          ##Publishers and Suscribers
           self.pub_pose = rospy.Publisher('/pose', PoseStamped, queue_size=10)         
           rospy.Subscriber('/cmd_vel',Twist,self.twist_callback)
           self.wr=rospy.Publisher("/wr",Float32,queue_size=10)
           self.wl=rospy.Publisher("/wl",Float32,queue_size=10)
 
-    #wrap to pi function
+     #Parametros para calcular la velocidad de las ruedas
      def twist_callback(self,msg):
-          self.msg_t = Twist()
-          #La unico que se ocupa para determinar la velocidad
-          #en cada una de las ruedas 
-          self.msg_t.linear.x 
-          self.msg_t.angular.z
+          self.x_l = msg.linear.x
+          self.y_l = msg.linear.y
+          self.z_a = msg.angular.z
 
     
    
@@ -44,7 +45,7 @@ class Simulation:
      def pose_stamped(self):
           self._pwr=PoseStamped()
           ##Nombre del link de la rueda y sus componentes cercanos
-          #self._pwr.header.seq = 1
+          self._pwr.header.seq = 1
           self._pwr.header.stamp = rospy.Time.now()
           self._pwr.header.frame_id = "wheel1"
           self._pwr.pose.position.x = 1.5
@@ -73,7 +74,9 @@ class Simulation:
      
      def simulate(self):
           self.pose_stamped()
-          theta=0
+          theta=0.0
+          x_dot=0.0
+          y_dot=0.0
 
 
           while not rospy.is_shutdown():
@@ -88,14 +91,14 @@ class Simulation:
                   self.previous_time = current_time
                   
                   #obteniendo las velocidades de Wl y Wr
-                  wr_1 = self.msg_t.linear.x + (self.wheelbase * self.msg_t.angular.z / 2.0)
-                  wl_1= self.msg_t.linear.x - (self.wheelbase * self.msg_t.angular.z / 2.0)
+                  wr_1 = self.x_l + (self.wheelbase * self.z_a / 2.0)
+                  wl_1= self.x_l - (self.wheelbase * self.z_a / 2.0)
                   #Publicamos velocidades
+                  #rospy.loginfo(self.x_l)
                   self.wr.publish(wr_1)
                   self.wl.publish(wl_1)
                   
-                  #Obtenmos la pos y velocidad lineal como angular
-                  #de las velocidades podemos integrar con metodo de euler y obtener la posición 
+                  #Obtenmos la pos y velocidad lineal como angular de las velocidades podemos integrar con metodo de euler y obtener la posicion 
                   #x
                   x=x_dot*dt #pos
                   x_dot=self.radius*((wr_1+wl_1)/2)*np.cos(theta) #vel
@@ -108,10 +111,8 @@ class Simulation:
                   
 
                   ##Publicamos las poses
-
                   self._pwl.pose.position.x = x
                   self._pwl.pose.position.y = y
-                  #Este si es así????
                   self._pwl.pose.orientation.w = theta
 
                   self.pub_pose.publish(self._pwl)
@@ -128,6 +129,3 @@ if __name__=='__main__':
                     
     except rospy.ROSInterruptException:
         pass #Initialise and Setup node
-    
-
-
