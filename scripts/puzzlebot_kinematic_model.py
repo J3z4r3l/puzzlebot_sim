@@ -15,26 +15,20 @@ class Simulation:
           #Parameters
           self.radius=5.00
           self.wheelbase=19.00
-
-
-
           self.first=True
+
           ##Publishers 
-          self.pub_ = rospy.Publisher('/joint_states', JointState, queue_size=10)         
           self.pub_pose = rospy.Publisher('/pose', PoseStamped, queue_size=10)         
           rospy.Subscriber('/cmd_vel',Twist,self.twist_callback)
           self.wr=rospy.Publisher("/wr",Float32,queue_size=10)
           self.wl=rospy.Publisher("/wl",Float32,queue_size=10)
-        
 
     #wrap to pi function
      def twist_callback(self,msg):
           self.msg_t = Twist()
-          self.msg_t.linear.x         
-          self.msg_t.linear.y           
-          self.msg_t.linear.z           
-          self.msg_t.angular.x
-          self.msg_t.angular.y
+          #La unico que se ocupa para determinar la velocidad
+          #en cada una de las ruedas 
+          self.msg_t.linear.x 
           self.msg_t.angular.z
 
     
@@ -69,6 +63,7 @@ class Simulation:
           self._pwl.pose.position.x = 00.00
           self._pwl.pose.position.y = 00.00
           self._pwl.pose.position.z = 00.00
+          
           self._pwl.pose.orientation.x = 00.00
           self._pwl.pose.orientation.y = 00.00
           self._pwl.pose.orientation.z = 00.00
@@ -78,27 +73,61 @@ class Simulation:
      
      def simulate(self):
           self.pose_stamped()
+          theta=0
+
 
           while not rospy.is_shutdown():
               current_time = rospy.Time.now().to_sec()  # Get current time
-              self.pub_pose.publish(self._pwr)
+              #self.pub_pose.publish(self._pwr)
+              if self.first:
+                  self.previous_time = current_time
+                  self.first = False
+              else:
+                  #calculamos el diferencial de tiempo 
+                  dt = current_time - self.previous_time  # Calculate time difference
+                  self.previous_time = current_time
+                  
+                  #obteniendo las velocidades de Wl y Wr
+                  wr_1 = self.msg_t.linear.x + (self.wheelbase * self.msg_t.angular.z / 2.0)
+                  wl_1= self.msg_t.linear.x - (self.wheelbase * self.msg_t.angular.z / 2.0)
+                  #Publicamos velocidades
+                  self.wr.publish(wr_1)
+                  self.wl.publish(wl_1)
+                  
+                  #Obtenmos la pos y velocidad lineal como angular
+                  #de las velocidades podemos integrar con metodo de euler y obtener la posición 
+                  #x
+                  x=x_dot*dt #pos
+                  x_dot=self.radius*((wr_1+wl_1)/2)*np.cos(theta) #vel
+                  #y
+                  y=y_dot*dt #pos
+                  y_dot=self.radius*((wr_1+wl_1)/2)*np.sin(theta) #vel
+                  #z
+                  theta_dot=self.wrap_to_Pi(self.radius*((wr_1-wl_1)/self.wheelbase))
+                  theta=theta_dot*dt 
+                  
 
-#              if self.first:
-#                  self.previous_time = current_time
-#                  self.first = False
-#              else:
-#                  dt = current_time - self.previous_time  # Calculate time difference
-#                  self.previous_time = current_time
+                  ##Publicamos las poses
+
+                  self._pwl.pose.position.x = x
+                  self._pwl.pose.position.y = y
+                  #Este si es así????
+                  self._pwl.pose.orientation.w = theta
+
+                  self.pub_pose.publish(self._pwl)
                   
-                  
-                  
-              self.loop_rate.sleep()
+     
+     
+                  self.loop_rate.sleep()
 
 if __name__=='__main__':
     pendulum=Simulation()
     try:
          pendulum.simulate()
-         pass
+         
                     
     except rospy.ROSInterruptException:
         pass #Initialise and Setup node
+    
+
+
