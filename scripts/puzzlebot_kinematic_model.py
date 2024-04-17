@@ -99,15 +99,18 @@ class Simulation:
                   self.wl.publish(wl_1)
                   
                   #Obtenmos la pos y velocidad lineal como angular de las velocidades podemos integrar con metodo de euler y obtener la posicion 
-                  #x
-                  x=x_dot*dt #pos
-                  x_dot=self.radius*((wr_1+wl_1)/2)*np.cos(theta) #vel
-                  #y
-                  y=y_dot*dt #pos
-                  y_dot=self.radius*((wr_1+wl_1)/2)*np.sin(theta) #vel
                   #z
                   theta_dot=self.wrap_to_Pi(self.radius*((wr_1-wl_1)/self.wheelbase))
                   theta=theta_dot*dt 
+                  rospy.loginfo(theta)
+                  #x
+                  x=x_dot*dt #pos
+                  x_dot=self.radius*((wr_1+wl_1)/2)*np.cos(theta) #vel
+                  rospy.loginfo(x_dot)
+                  #y
+                  y=y_dot*dt #pos
+                  y_dot=self.radius*((wr_1+wl_1)/2)*np.sin(theta) #vel
+                  rospy.loginfo(y_dot)
                   
 
                   ##Publicamos las poses
@@ -129,3 +132,6 @@ if __name__=='__main__':
                     
     except rospy.ROSInterruptException:
         pass #Initialise and Setup node
+
+##Linea terminal modificar el cmd_vel
+###rostopic pub -r 10 /cmd_vel geometry_msgs/Twist '{linear: {x: 1.0}, angular: {z: 1.0}}'
