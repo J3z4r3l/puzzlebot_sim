@@ -44,7 +44,7 @@
         </collision>
 
         <visual>
-            <origin rpy="1.57079632679 0 1.57079632679" xyz="0 0 0"/>
+            <origin xyz="0.052 0.0972 0.05" rpy="1.5708 -1.5708 0"/>
             <geometry>
                 <mesh filename="package://puzzlebot_sim/models/MCR2_1000_1_1_Wheel_Coupler_2.stl"/>
             </geometry>
@@ -66,7 +66,7 @@
         </collision>
 
         <visual>
-            <origin rpy="1.57079632679 0 1.57079632679" xyz="0 0 0"/>
+            <origin xyz="0.052 -0.0972 0.05" rpy="-1.5708 1.5708 0"/>
             <geometry>
                 <mesh filename="package://puzzlebot_sim/models/MCR2_1000_1_1_Wheel_Coupler_2.stl"/>
             </geometry>
@@ -81,13 +81,14 @@
     <origin xyz="0.0 0.0 0.05"/>
 </joint>
 
-<joint name="wheel_joint1" type="continuous">
+<joint name="joint_wheel1" type="continuous">
     <parent link="chassis"/>
     <child link="wheel1"/>
     <origin xyz="0.052 0.0972 0.0" rpy="1.5708 0 -1.5708"/>
+    
 </joint>
 
-<joint name="wheel_joint2" type="continuous">
+<joint name="joint_wheel2" type="continuous">
     <parent link="chassis"/>
     <child link="wheel2"/>
     <origin xyz="0.052 -0.0972 0.0" rpy="-1.5708 0 1.5708"/>
