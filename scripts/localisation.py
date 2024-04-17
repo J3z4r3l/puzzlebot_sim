@@ -1,133 +1,65 @@
 #!/usr/bin/env python
 import rospy
 import numpy as np
-from std_msgs.msg import Float32
+from std_msgs.msg import Float64
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Twist, PoseStamped
 from nav_msgs.msg import Odometry
+import tf.transformations as tf
 
-class Localisation:
-    def _init_(self):
-        # Initialize
-        rospy.init_node("puzz_sim")
-        self.loop_rate = rospy.Rate(rospy.get_param("~node_rate",100))
+class LocalizationNode:
+    def __init__(self):
+        rospy.init_node("localisation")
+        self.rate = rospy.Rate(100) 
+        self.base_time = rospy.Time.now()
+        self.wheelbase = 0.005  
+        self.radius = 0.05 
+        self.pose = PoseStamped()
+        self.pose.header.frame_id = "odom"
+        self.pose.child_frame_id = "base_link"
+        self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10)
+        rospy.Subscriber("/wr", Float64, self.wr_callback)
+        rospy.Subscriber("/wl", Float64, self.wl_callback)
 
-        # Parameters
-        self.radius=5.00
-        self.wheelbase=19.00
+    def wr_callback(self, msg):
+        self.wr_speed = msg.data
 
-        self.first=True
-        ##Publishers
-        #self.pub_ = rospy.Publisher('/joint_states', JointState, queue_size=10)
-        #rospy.Subscriber('/cmd_vel',Twist,self.twist_callback)
-        
-        rospy.Subscriber('/pose', PoseStamped, self.callback_pose)
-        self.pub_odom = rospy.Publisher('/odom', Odometry, queue_size=10)
-        rospy.Subscriber("/wr",Float32,self.odometry_callback)
-        rospy.Subscriber("/wl",Float32,self.odometry_callback)
+    def wl_callback(self, msg):
+        self.wl_speed = msg.data
 
-    def callback_pose(self,msg):
-        #ponemos lo que vamos a recibir de pose
-        pass
+    def calculate_odometry(self):
+        current_time = rospy.Time.now()
+        dt = (current_time - self.base_time).to_sec()
+        self.base_time = current_time
 
-    
-    # wrap to pi function
-    def wrap_to_Pi(self,theta):
-        result = np.fmod((theta + np.pi),(2 * np.pi))
-        if(result < 0):
-            result += 2 * np.pi
-        return result - np.pi
+        wr = self.wr_speed
+        wl = self.wl_speed
 
-    ##NO estoy muy seguro de que esto vaya jaja
-    def pose_stamped(self):
-        self._pwr=PoseStamped()
-        ##Nombre del link de la rueda y sus componentes cercanos
-        #self._pwr.header.seq = 1
-        self._pwr.header.stamp = rospy.Time.now()
-        self._pwr.header.frame_id = "wheel1"
-        self._pwr.pose.position.x = 1.5
-        self._pwr.pose.position.y = -1.50
-        self._pwr.pose.position.z = 0.00
-        self._pwr.pose.orientation.x = 00.052
-        self._pwr.pose.orientation.y = 00.0972
-        self._pwr.pose.orientation.z = 00.00
-        self._pwr.pose.orientation.w = 00.00
+        # Calculate robot's linear and angular speed
+        v = self.radius * (wr + wl) / 2.0
+        w = self.radius * (wr - wl) / self.wheelbase
 
-        self._pwl=PoseStamped()
-        ##Nombre del link de la rueda y sus componentes cercanos
-        self._pwl.header.seq = 1
-        self._pwl.header.stamp = rospy.Time.now()
-        self._pwl.header.frame_id = 'wheel2'
-        self._pwl.pose.position.x = 00.00
-        self._pwl.pose.position.y = 00.00
-        self._pwl.pose.position.z = 00.00
-        self._pwl.pose.orientation.x = 00.00
-        self._pwl.pose.orientation.y = 00.00
-        self._pwl.pose.orientation.z = 00.00
-        self._pwl.pose.orientation.w = 00.00
+        # Update robot's pose
+        self.pose.pose.position.x += v * np.cos(self.pose.pose.orientation.z) * dt
+        self.pose.pose.position.y += v * np.sin(self.pose.pose.orientation.z) * dt
+        self.pose.pose.orientation.z += w * dt
 
-    #dos en uno genial!
-    def odometry_callback(self, msg_wr, msg_wl):
-        # Process data from /wr and /wl topics
-        wr = msg_wr.data
-        wl = msg_wl.data
+        # Create and publish Odometry message
+        odom_msg = Odometry()
+        odom_msg.header.stamp = current_time
+        odom_msg.header.frame_id = "odom"
+        odom_msg.child_frame_id = "base_link"
+        odom_msg.pose.pose = self.pose.pose
+        self.odom_pub.publish(odom_msg)
 
-        # Calculate linear and angular velocities
-        ##No sé si las velocidades ya las teniamos que mandar desde el nodo anterior 
-        v = (wr + wl) / 2.0
-        omega = (wr - wl) / self.wheelbase
-
-        # Calculate position and orientation
-        dt = 1.0 / self.loop_rate.frequency
-        x = v * dt
-        y = 0.0
-        theta = omega * dt
-
-        # Create Odometry message
-        odom = Odometry()
-        odom.header.frame_id = "odom"
-        odom.child_frame_id = "base_link"
-        odom.pose.pose.position.x = self._pwr.pose.position.x + x
-        odom.pose.pose.position.y = self._pwr.pose.position.y + y
-        odom.pose.pose.position.z = 0.0
-        odom.pose.pose.orientation.x = 0.0
-        odom.pose.pose.orientation.y = 0.0
-        odom.pose.pose.orientation.z = np.sin(theta / 2.0)
-        odom.pose.pose.orientation.w = np.cos(theta / 2.0)
-
-        # Fill in the Odometry message with the necessary data
-        # ...
-
-        self.pub_odom.publish(odom)
-
-    def twist_callback(self, msg):
-        # ...
-        self.odometry_callback(self.wr, self.wl)
-
-    def simulate(self):
-        self.pose_stamped()
-
+    def run(self):
         while not rospy.is_shutdown():
-            current_time = rospy.Time.now().to_sec()  # Get current time
-            self.pub_pose.publish(self._pwr)
+            self.calculate_odometry()
+            self.rate.sleep()
 
-            if self.first:
-                self.previous_time = current_time
-                self.first = False
-            else:
-                dt = current_time - self.previous_time  # Calculate time difference
-                self.previous_time = current_time
-
-                # Publish /wr and /wl messages
-                # ...
-
-                self.odometry_callback(self.wr, self.wl)
-
-            self.loop_rate.sleep()
-
-if __name__=='__main__':
-    pendulum=Localisation()
+if __name__ == "__main__":
     try:
-        pendulum.simulate()
+        node = LocalizationNode()
+        node.run()
     except rospy.ROSInterruptException:
-        pass #Initialise and Setup node
+        pass
