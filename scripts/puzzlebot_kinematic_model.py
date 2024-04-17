@@ -3,7 +3,7 @@ import rospy
 import numpy as np
 from std_msgs.msg import Float32
 from sensor_msgs.msg import JointState
-from geometry_msgs.msg import Twist, PoseStamped
+from geometry_msgs.msg import Twist, PoseStamped, Quaternion
 
 
 class Simulation:
@@ -54,7 +54,7 @@ class Simulation:
           self._pwr.pose.orientation.x = 00.052
           self._pwr.pose.orientation.y = 00.0972
           self._pwr.pose.orientation.z = 00.00
-          self._pwr.pose.orientation.w = 00.00
+          self._pwr.pose.orientation=Quaternion(0.0, 0.0, 0.0, 1.0)
           
           self._pwl=PoseStamped()
         ##Nombre del link de la rueda y sus componentes cercanos
@@ -65,10 +65,7 @@ class Simulation:
           self._pwl.pose.position.y = 00.00
           self._pwl.pose.position.z = 00.00
           
-          self._pwl.pose.orientation.x = 00.00
-          self._pwl.pose.orientation.y = 00.00
-          self._pwl.pose.orientation.z = 00.00
-          self._pwl.pose.orientation.w = 00.00
+          self._pwl.pose.orientation=Quaternion(0.0, 0.0, 0.0, 1.0)
           
 
      
@@ -99,7 +96,7 @@ class Simulation:
                   self.wl.publish(wl_1)
                   
                   #Obtenmos la pos y velocidad lineal como angular de las velocidades podemos integrar con metodo de euler y obtener la posicion 
-                  #z
+                  #z normalizando el angulo 
                   theta_dot=self.wrap_to_Pi(self.radius*((wr_1-wl_1)/self.wheelbase))
                   theta=theta_dot*dt 
                   rospy.loginfo(theta)
@@ -116,7 +113,8 @@ class Simulation:
                   ##Publicamos las poses
                   self._pwl.pose.position.x = x
                   self._pwl.pose.position.y = y
-                  self._pwl.pose.orientation.w = theta
+                  self._pwl.pose.orientation=Quaternion(0.0, 0.0, 0.0, theta)
+          
 
                   self.pub_pose.publish(self._pwl)
                   
