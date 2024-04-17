@@ -11,7 +11,7 @@ class Simulation:
           #Initialize
           rospy.init_node("puzz_sim")
           self.loop_rate = rospy.Rate(rospy.get_param("~node_rate",100))
-         
+          
           #Parameters
           self.radius=5.00
           self.wheelbase=19.00
