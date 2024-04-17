@@ -91,8 +91,8 @@ class Simulation:
                   self.previous_time = current_time
                   
                   #obteniendo las velocidades de Wl y Wr
-                  wr_1 = self.x_l + (self.wheelbase * self.z_a / 2.0)
-                  wl_1= self.x_l - (self.wheelbase * self.z_a / 2.0)
+                  wr_1 = (2.0*(self.x_l) + (self.wheelbase * self.z_a))/2.0
+                  wl_1= (2.0*(self.x_l) - (self.wheelbase * self.z_a))/2.0
                   #Publicamos velocidades
                   #rospy.loginfo(self.x_l)
                   self.wr.publish(wr_1)
