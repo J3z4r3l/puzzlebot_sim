@@ -97,6 +97,7 @@ class Simulation:
           theta=0.0
           x_dot=0.0
           y_dot=0.0
+          x=0.0
 
 
           while not rospy.is_shutdown():
@@ -121,16 +122,16 @@ class Simulation:
                   #Obtenmos la pos y velocidad lineal como angular de las velocidades podemos integrar con metodo de euler y obtener la posicion 
                   #z normalizando el angulo 
                   theta_dot=self.wrap_to_Pi(self.radius*((wr_1-wl_1)/self.wheelbase))
-                  theta=theta_dot*dt 
-                  rospy.loginfo(theta)
+                  theta=+theta_dot*dt 
+               ###rospy.loginfo(theta)
                   #x
-                  x=x_dot*dt #pos
+                  x+=x_dot*dt #pos
                   x_dot=self.radius*((wr_1+wl_1)/2)*np.cos(theta) #vel
-                  rospy.loginfo(x_dot)
+                  rospy.loginfo(x)
                   #y
-                  y=y_dot*dt #pos
+                  y=+y_dot*dt #pos
                   y_dot=self.radius*((wr_1+wl_1)/2)*np.sin(theta) #vel
-                  rospy.loginfo(y_dot)
+                  ##rospy.loginfo(y_dot)
                   
 
                   ##Publicamos las poses
@@ -138,19 +139,15 @@ class Simulation:
                   self._pwl.pose.position.y = y
                   self._pwl.pose.orientation.w= theta
 
+                  
+
                   self.msg.header.stamp = rospy.Time.now()
-                  self.msg.position[0] = self.wrap_to_Pi(x)
-                  self.msg.velocity[0] = 3
-                  self.msg.header.stamp = rospy.Time.now()
-                  self.msg.position[0] = self.wrap_to_Pi(x)
-                  self.msg.velocity[0] = x_dot
+                  self.msg.position[0] = current_time
+                  self.msg.velocity[0] = current_time
                   
                   self.msg2.header.stamp = rospy.Time.now()
-                  self.msg2.position[0] = self.wrap_to_Pi(x)
-                  self.msg2.velocity[0] = x_dot
-                  self.msg2.header.stamp = rospy.Time.now()
-                  self.msg2.position[0] = self.wrap_to_Pi(x)
-                  self.msg2.velocity[0] = x_dot
+                  self.msg2.position[0] = x
+                  self.msg2.velocity[0] = wr_1
                   
                   self.pub_custom_joint_state.publish(self.msg)
 
