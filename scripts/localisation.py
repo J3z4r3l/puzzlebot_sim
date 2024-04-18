@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 import numpy as np
-from std_msgs.msg import Float64
+from std_msgs.msg import Float32
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Twist, PoseStamped
 from nav_msgs.msg import Odometry
@@ -16,10 +16,12 @@ class LocalizationNode:
         self.radius = 0.05 
         self.pose = PoseStamped()
         self.pose.header.frame_id = "odom"
-        self.pose.child_frame_id = "base_link"
+        self.wr_speed = 0.0
+        self.wl_speed = 0.0
+        #self.pose.child_frame_id = "base_link"
         self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10)
-        rospy.Subscriber("/wr", Float64, self.wr_callback)
-        rospy.Subscriber("/wl", Float64, self.wl_callback)
+        rospy.Subscriber("/wr", Float32, self.wr_callback)
+        rospy.Subscriber("/wl", Float32, self.wl_callback)
 
     def wr_callback(self, msg):
         self.wr_speed = msg.data
