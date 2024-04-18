@@ -21,7 +21,12 @@ class Simulation:
           self.z_a=0.0
 
           ##Publishers and Suscribers
+          self.pub_custom_joint_state = rospy.Publisher('/joint_states', JointState, queue_size=10)         
+          
+          self.pub_js = rospy.Publisher('/joint_states', JointState, queue_size=10)         
+          
           self.pub_pose = rospy.Publisher('/pose', PoseStamped, queue_size=10)         
+          
           rospy.Subscriber('/cmd_vel',Twist,self.twist_callback)
           self.wr=rospy.Publisher("/wr",Float32,queue_size=10)
           self.wl=rospy.Publisher("/wl",Float32,queue_size=10)
@@ -32,7 +37,24 @@ class Simulation:
           self.y_l = msg.linear.y
           self.z_a = msg.angular.z
 
-    
+     def init_joints(self):
+          self.msg=JointState()
+          self.msg.header.frame_id= "wheel1"
+          self.msg.header.stamp= rospy.Time.now()
+          self.msg.name.extend(["wheel_joint1"])
+          self.msg.position.extend([0.0])
+          self.msg.velocity.extend([0.0])
+          self.msg.effort.extend([0.0])
+          
+          self.msg2=JointState()
+          self.msg2.header.frame_id= "wheel2"
+          self.msg2.header.stamp= rospy.Time.now()
+          self.msg2.name.extend(["wheel_joint2"])
+          self.msg2.position.extend([0.0])
+          self.msg2.velocity.extend([0.0])
+          self.msg2.effort.extend([0.0])
+          
+     
    
     #wrap to pi function
      def wrap_to_Pi(self,theta):
@@ -70,6 +92,8 @@ class Simulation:
      
      def simulate(self):
           self.pose_stamped()
+          self.init_joints()
+
           theta=0.0
           x_dot=0.0
           y_dot=0.0
@@ -113,7 +137,24 @@ class Simulation:
                   self._pwl.pose.position.x = x
                   self._pwl.pose.position.y = y
                   self._pwl.pose.orientation.w= theta
-          
+
+                  self.msg.header.stamp = rospy.Time.now()
+                  self.msg.position[0] = self.wrap_to_Pi(x)
+                  self.msg.velocity[0] = 3
+                  self.msg.header.stamp = rospy.Time.now()
+                  self.msg.position[0] = self.wrap_to_Pi(x)
+                  self.msg.velocity[0] = x_dot
+                  
+                  self.msg2.header.stamp = rospy.Time.now()
+                  self.msg2.position[0] = self.wrap_to_Pi(x)
+                  self.msg2.velocity[0] = x_dot
+                  self.msg2.header.stamp = rospy.Time.now()
+                  self.msg2.position[0] = self.wrap_to_Pi(x)
+                  self.msg2.velocity[0] = x_dot
+                  
+                  self.pub_custom_joint_state.publish(self.msg)
+
+                  self.pub_js.publish(self.msg2)
 
                   self.pub_pose.publish(self._pwl)
                   
