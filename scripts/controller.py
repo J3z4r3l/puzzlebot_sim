@@ -6,11 +6,6 @@ import numpy as np
 #from mini_c2.msg import input_point
 from nav_msgs.msg import Odometry
 
-class PointGen:
-    def __init__(self):
-        self.x = []
-        self.y = []
-        self.index = int
 
 class Controller:
     def __init__(self):
@@ -38,11 +33,17 @@ class Controller:
         self.controlador_va=0.0        
         self.last_vl=0.0
         self.last_va=0.0
-        self.i=0
+
+        ##Variables set_point 
+        self.x_list = [1, 1, 0, 1, 0]
+        self.y_list = [0, 1, 1, 0, 0]
+        self.index = 0
+        self.y=0.0
+        self.x=0.0
+        self.ori_w=0.0
 
         #Inicializar nodos
         rospy.init_node("controller")
-        rospy.Subscriber("/set_point", PointGen, self.set_point_callback)
         rospy.Subscriber("/odom",Odometry,self.odom_callback)   
         self.pose_pub = rospy.Publisher('/cmd_vel',Twist,queue_size=10)
 
@@ -55,21 +56,12 @@ class Controller:
         self.msg.angular.z = 0
 
         self.rate = rospy.Rate(10)
-
     def odom_callback(self, data):
-        self.x = data.pose.pose.pos_x
-        self.y = data.pose.pose.pos_y
-        self.z = data.pose.pose.pos_z
-        self.ori_x = data.pose.pose.ori.x
-        self.ori_y = data.pose.pose.ori.y
-        self.ori_z = data.pose.pose.ori.z
-        self.ori_w = data.pose.pose.ori.w
+        self.x = data.pose.pose.position.x
+        self.y = data.pose.pose.position.y
+        self.ori_w = data.pose.pose.orientation.w
 
-    def set_point_callback(self, msg):
-        self.x_point = msg.x
-        self.y_point = msg.y
-        self.position = msg.index
-
+    
     def stop(self):
         print("Stopping")
         self.msg.linear.x = 0
@@ -79,9 +71,15 @@ class Controller:
         self.msg.angular.y = 0
         self.msg.angular.z = 0
         self.pose_pub.publish(self.msg)
-
+    def wrap_to_Pi(self,theta):
+        result = np.fmod((theta + np.pi),(2 * np.pi))
+        if(result < 0):
+                result += 2 * np.pi
+        return result - np.pi
     def run(self):
+
         while not rospy.is_shutdown():
+            
             if self.first:
                 self.current_time = rospy.get_time() 
                 self.previous_time = rospy.get_time()
@@ -91,15 +89,9 @@ class Controller:
                 dt = (self.current_time - self.previous_time)
                 self.previous_time = self.current_time
                 
-                def wrap_to_Pi(self,theta):
-                    result = np.fmod((theta + np.pi),(2 * np.pi))
-                    if(result < 0):
-                            result += 2 * np.pi
-                    return result - np.pi
-
-                #Calculo de errores 
-                self.error_ang = np.atan2(self.x_target,self.y_target) - wrap_to_Pi(self.ori_w)
-                self.error_dist = np.sqrt(np.power((self.x_target - self.x),2)+(np.power((self.y_target - self.y),2)))
+                self.error_ang = np.arctan2(self.y_list[self.index]-self.y, self.x_list[self.index]-self.x) - (self.ori_w-1)
+                self.error_dist = np.sqrt(np.square(self.x_list[self.index]-self.x) + np.square(self.y_list[self.index]-self.y))
+                rospy.loginfo(self.error_dist)
                 
                 #Controlador lineal  
                 self.error_sum_l += self.error_dist * dt
@@ -117,26 +109,33 @@ class Controller:
                 self.velocidad_ang = self.last_va +((self.controlador_va-self.last_va))
                 self.last_va=self.velocidad_ang
 
-                #Cambio de posiciones
-                if self.error_dist < 0.1:
+                
+                #Cambio de posiciones esto esta bien 
+                if self.error_dist < 0.15:
                     self.error_dist=0
-                if self.error_ang < 0.1 and self.error_ang > -0.1:
+                if self.error_ang < 0.15 and self.error_ang > -0.15:
                     self.error_ang=0
-                if self.error_ang==0 and self.error_dist==0 and self.i<self.position:
-                    self.x_target = self.x_point[self.i]
-                    self.y_target = self.y_point[self.i]
-                    self.i+=1
-                if self.i==self.position:
+                if self.error_ang==0 and self.error_dist==0 and self.index<len(self.x_list)-1:
+                    #self.index+=1
+                    self.index+=1
+                    
+                if self.index==len(self.x_list)-1:
                     self.error_ed=0
-                    self.error_eang=0 
-                                
-                #Publicar las posiciones
-                self.msg.linear.x = self.velocidad_l
-                self.msg.angular.z = self.velocidad_ang
-                print_info = "%3f | %3f  " %(self.velocidad_l,self.velocidad_ang)
-                rospy.loginfo(print_info)
-                self.pose_pub.publish(self.msg)
-                self.rate.sleep()
+                    self.error_eang=0
+                    self.velocidad_l=0
+                    self.velocidad_ang=0
+
+ 
+                else:
+    #Publicar las velocidades del /cmd_vel solo si no hemos alcanzado el final de la lista
+                    self.msg.angular.z = self.velocidad_ang
+                    self.msg.linear.x = self.velocidad_l
+                    rospy.loginfo(self.index)
+                    
+                    print_info = "%3f | %3f  " %(self.velocidad_l,self.velocidad_ang)
+                    #rospy.loginfo(print_info)
+                    self.pose_pub.publish(self.msg)
+                    self.rate.sleep()
 
 if __name__ == "__main__":
     controller = Controller()

@@ -25,7 +25,7 @@ class LocalizationNode:
 
         # Define the wheelbase and radius of the robot
         self.first = True
-        self.wheelbase = 0.191 
+        self.wheelbase = 0.19 
         self.radius = 0.05 
         self.wr_speed = 0.0
         self.wl_speed = 0.0
@@ -33,8 +33,7 @@ class LocalizationNode:
         # Initialize the robot's pose
         self.pose = PoseStamped()
         self.pose.header.frame_id = "odom"
-        #self.pose.child_frame_id = "base_link"
-
+        
         # Create a publisher for the robot's odometry
         self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10)
 
@@ -86,13 +85,15 @@ class LocalizationNode:
             # Update robot's pose
             self.pose.pose.position.x += v * np.cos(self.theta) * dt
             self.pose.pose.position.y += v * np.sin(self.theta) * dt
-            self.theta += self.wrap_to_Pi(w * dt)  # Actualiza theta correctamente
+            self.theta = self.wrap_to_Pi(self.theta + w * dt)  # Actualiza theta correctamente
             rospy.loginfo(self.theta)
             quaternion = quaternion_from_euler(0, 0, self.theta)
             self.pose.pose.orientation.x = quaternion[0]
             self.pose.pose.orientation.y = quaternion[1]
             self.pose.pose.orientation.z = quaternion[2]
             self.pose.pose.orientation.w = quaternion[3]
+            rospy.loginfo(self.pose.pose.orientation.w)
+            
 
             # Create and publish Odometry message
             odom_msg = Odometry()
