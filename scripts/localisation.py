@@ -73,10 +73,15 @@ class LocalizationNode:
 
             wr = self.wr_speed
             wl = self.wl_speed
+            
 
             # Calculate robot's linear and angular speed
             v = self.radius * (wr + wl) / 2.0
             w = self.radius * (wr - wl) / self.wheelbase
+
+            rospy.loginfo(v)
+            #rospy.loginfo(w)
+
 
             # Update robot's pose
             self.pose.pose.position.x += v * np.cos(self.theta) * dt

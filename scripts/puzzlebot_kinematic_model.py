@@ -116,10 +116,11 @@ class Simulation:
                   
                   x+=x_dot*dt 
                   x_dot=self.radius*((wr_1+wl_1)/2)*np.cos(theta) #vel
-                  ##rospy.loginfo(x_dot)
+                  rospy.loginfo(x_dot)
                   y +=y_dot*dt 
                   y_dot=self.radius*((wr_1+wl_1)/2)*np.sin(theta) #vel
                   
+                  #rospy.loginfo(theta_dot)
 
                   ##Publicamos las poses
                   self._robot.pose.position.x = x
