@@ -84,7 +84,7 @@
 <joint name="wheel_joint1" type="continuous">
     <parent link="chassis"/>
     <child link="wheel1"/>
-    <origin xyz="0.052 0.0972 0.0" rpy="1.5708 0 -1.5708" />
+    <origin xyz="0.052 0.0972 0.0" rpy="-1.5708 0 1.5708" />
 </joint>
 
 <joint name="wheel_joint2" type="continuous">

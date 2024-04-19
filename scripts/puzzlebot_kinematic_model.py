@@ -13,8 +13,8 @@ class Simulation:
           self.loop_rate = rospy.Rate(rospy.get_param("~node_rate",100))
           
           #Parameters
-          self.radius=5.00
-          self.wheelbase=19.00
+          self.radius=0.05
+          self.wheelbase=0.19
           self.first=True
           self.x_l=0.0
           self.y_l=0.0
@@ -66,30 +66,18 @@ class Simulation:
      
      
      def pose_stamped(self):
-          self._pwr=PoseStamped()
+          self._robot=PoseStamped()
           ##Nombre del link de la rueda y sus componentes cercanos
-          self._pwr.header.seq = 1
-          self._pwr.header.stamp = rospy.Time.now()
-          self._pwr.header.frame_id = "wheel1"
-          self._pwr.pose.position.x = 1.5
-          self._pwr.pose.position.y = -1.50
-          self._pwr.pose.position.z = 0.00
-          self._pwr.pose.orientation.x = 00.052
-          self._pwr.pose.orientation.y = 00.0972
-          self._pwr.pose.orientation.z = 00.00
-          
-          self._pwl=PoseStamped()
-        ##Nombre del link de la rueda y sus componentes cercanos
-          self._pwl.header.seq = 1
-          self._pwl.header.stamp = rospy.Time.now()
-          self._pwl.header.frame_id = 'wheel2'
-          self._pwl.pose.position.x = 00.00
-          self._pwl.pose.position.y = 00.00
-          self._pwl.pose.position.z = 00.00
-          self._pwl.pose.orientation.x = 00.052
-          self._pwl.pose.orientation.y = 00.0972
-          self._pwl.pose.orientation.z = 00.00
-          self.pub_pose = rospy.Publisher('/pose', PoseStamped, queue_size=10)         
+          self._robot.header.seq = 1
+          self._robot.header.stamp = rospy.Time.now()
+          self._robot.header.frame_id = "wheel1"
+          self._robot.pose.position.x = 0.0
+          self._robot.pose.position.y = 0.0
+          self._robot.pose.position.z = 0.00
+          self._robot.pose.orientation.x = 00.00
+          self._robot.pose.orientation.y = 00.00
+          self._robot.pose.orientation.z = 00.00
+
           
      
      def simulate(self):
@@ -100,11 +88,12 @@ class Simulation:
           x_dot=0.0
           y_dot=0.0
           x=0.0
+          y=0.0
 
 
           while not rospy.is_shutdown():
               current_time = rospy.Time.now().to_sec()  # Get current time
-              #self.pub_pose.publish(self._pwr)
+              #self.pub_pose.publish(self._robot)
               if self.first:
                   self.previous_time = current_time
                   self.first = False
@@ -114,32 +103,28 @@ class Simulation:
                   self.previous_time = current_time
                   
                   #obteniendo las velocidades de Wl y Wr
-                  wr_1 = (2.0*(self.x_l) + (self.wheelbase * self.z_a))/2.0
-                  wl_1= (2.0*(self.x_l) - (self.wheelbase * self.z_a))/2.0
+                  wr_1 = (2.0*(self.x_l) + (self.wheelbase *self.z_a))/(2.0*self.radius)
+                  wl_1= (2.0*(self.x_l) - (self.wheelbase * self.z_a))/(2.0*self.radius)
+                  rospy.loginfo(wl_1)
                   #Publicamos velocidades
-                  #rospy.loginfo(self.x_l)
                   self.wr.publish(wr_1)
                   self.wl.publish(wl_1)
                   
                   #Obtenmos la pos y velocidad lineal como angular de las velocidades podemos integrar con metodo de euler y obtener la posicion 
-                  #z normalizando el angulo 
                   theta_dot=self.wrap_to_Pi(self.radius*((wr_1-wl_1)/self.wheelbase))
-                  theta=+theta_dot*dt 
-               ###rospy.loginfo(theta)
-                  #x
-                  x+=x_dot*dt #pos
+                  theta+=theta_dot*dt 
+                  
+                  x+=x_dot*dt 
                   x_dot=self.radius*((wr_1+wl_1)/2)*np.cos(theta) #vel
-                  rospy.loginfo(x)
-                  #y
-                  y=+y_dot*dt #pos
+                  ##rospy.loginfo(x_dot)
+                  y +=y_dot*dt 
                   y_dot=self.radius*((wr_1+wl_1)/2)*np.sin(theta) #vel
-                  ##rospy.loginfo(y_dot)
                   
 
                   ##Publicamos las poses
-                  self._pwl.pose.position.x = x
-                  self._pwl.pose.position.y = y
-                  self._pwl.pose.orientation.w= theta
+                  self._robot.pose.position.x = x
+                  self._robot.pose.position.y = y
+                  self._robot.pose.orientation.z= theta
 
                   
 
@@ -155,8 +140,7 @@ class Simulation:
 
                   self.pub_js.publish(self.msg2)
 
-                  self.pub_pose.publish(self._pwl)
-                  self.pub_pose.publish(self._pwr)
+                  self.pub_pose.publish(self._robot)
                   
      
      
