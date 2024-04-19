@@ -131,11 +131,11 @@ class Simulation:
 
                   self.msg.header.stamp = rospy.Time.now()
                   self.msg.position[0] =  x
-                  self.msg.velocity[0] = wl_1
+                  #self.msg.velocity[0] = wl_1
                   
                   self.msg2.header.stamp = rospy.Time.now()
                   self.msg2.position[0] = x
-                  self.msg2.velocity[0] = wr_1
+                  #self.msg2.velocity[0] = wr_1
                   
                   self.pub_custom_joint_state.publish(self.msg)
 

@@ -35,8 +35,8 @@ class Controller:
         self.last_va=0.0
 
         ##Variables set_point 
-        self.x_list = [1, 1, 0, 1, 0]
-        self.y_list = [0, 1, 1, 0, 0]
+        self.x_list = [1, 2, 3, 4, 0]
+        self.y_list = [0, 0, 0, 0, 0]
         self.index = 0
         self.y=0.0
         self.x=0.0
@@ -88,8 +88,7 @@ class Controller:
                 self.current_time = rospy.get_time() 
                 dt = (self.current_time - self.previous_time)
                 self.previous_time = self.current_time
-                
-                self.error_ang = np.arctan2(self.y_list[self.index]-self.y, self.x_list[self.index]-self.x) - (self.ori_w-1)
+                self.error_ang = self.wrap_to_Pi(np.arctan2(self.y_list[self.index]-self.y, self.x_list[self.index]-self.x) - (self.ori_w-1))
                 self.error_dist = np.sqrt(np.square(self.x_list[self.index]-self.x) + np.square(self.y_list[self.index]-self.y))
                 rospy.loginfo(self.error_dist)
                 
