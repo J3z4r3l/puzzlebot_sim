@@ -142,8 +142,8 @@ class Simulation:
                   
 
                   self.msg.header.stamp = rospy.Time.now()
-                  self.msg.position[0] = current_time
-                  self.msg.velocity[0] = current_time
+                  self.msg.position[0] =  x
+                  self.msg.velocity[0] = wl_1
                   
                   self.msg2.header.stamp = rospy.Time.now()
                   self.msg2.position[0] = x
