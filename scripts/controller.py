@@ -42,7 +42,7 @@ class Controller:
 
         #Inicializar nodos
         rospy.init_node("controller")
-        rospy.Subscriber("/set_point",PointGen,self.target_callback)
+        rospy.Subscriber("/set_point", PointGen, self.set_point_callback)
         rospy.Subscriber("/odom",Odometry,self.odom_callback)   
         self.pose_pub = rospy.Publisher('/cmd_vel',Twist,queue_size=10)
 

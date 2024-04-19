@@ -110,7 +110,7 @@ class Simulation:
                   self.wr.publish(wr_1)
                   self.wl.publish(wl_1)
                   
-                  #Obtenmos la pos y velocidad lineal como angular de las velocidades podemos integrar con metodo de euler y obtener la posicion 
+                  #Obtenmos la pos y veloci-->dad lineal como angular de las velocidades podemos integrar con metodo de euler y obtener la posicion 
                   theta_dot=self.wrap_to_Pi(self.radius*((wr_1-wl_1)/self.wheelbase))
                   theta+=theta_dot*dt 
                   

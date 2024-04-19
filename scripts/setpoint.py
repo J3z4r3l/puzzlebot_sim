@@ -17,9 +17,7 @@ class PointGenNode:
         self.PointGen.index = len(self.PointGen.x)
 
 if __name__ == '__main__':
-
     rospy.init_node("PointGenNode")
     SPN = PointGenNode()
     SPN.cmd_pub.publish(SPN.PointGen)
-
     rospy.spin()

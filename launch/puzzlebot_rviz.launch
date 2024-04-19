@@ -19,7 +19,12 @@
         <node name="puzz_sim" pkg="puzzlebot_sim" type="puzzlebot_kinematic_model.py"/>
 
         <node name="localisation" pkg="puzzlebot_sim" type="localisation.py"/>
+<!--
+        <node name="controller" pkg="puzzlebot_sim" type="controller.py"/>
+
+        <node name="PointGenNode" pkg="puzzlebot_sim" type="setpoint.py"/>
     
+    -->
     
         <!--RVIZ -->
         <arg name="rvizconfig" default="$(find puzzlebot_sim)/rviz/puzzlebot_sim.rviz" />
