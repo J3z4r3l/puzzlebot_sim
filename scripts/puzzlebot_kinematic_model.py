@@ -26,6 +26,7 @@ class Simulation:
           self.pub_js = rospy.Publisher('/joint_states', JointState, queue_size=10)         
           
           self.pub_pose = rospy.Publisher('/pose', PoseStamped, queue_size=10)         
+          self.pub_pose_2 = rospy.Publisher('/pose', PoseStamped, queue_size=10)         
           
           rospy.Subscriber('/cmd_vel',Twist,self.twist_callback)
           self.wr=rospy.Publisher("/wr",Float32,queue_size=10)
@@ -88,6 +89,7 @@ class Simulation:
           self._pwl.pose.orientation.x = 00.052
           self._pwl.pose.orientation.y = 00.0972
           self._pwl.pose.orientation.z = 00.00
+          self.pub_pose = rospy.Publisher('/pose', PoseStamped, queue_size=10)         
           
      
      def simulate(self):
@@ -154,6 +156,7 @@ class Simulation:
                   self.pub_js.publish(self.msg2)
 
                   self.pub_pose.publish(self._pwl)
+                  self.pub_pose.publish(self._pwr)
                   
      
      

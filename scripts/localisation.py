@@ -12,8 +12,8 @@ from tf.transformations import quaternion_from_euler
 from tf import TransformBroadcaster
 
 class LocalizationNode:
-    def _init_(self):
         # Initialize the ROS node named "localisation"
+    def __init__(self):
         rospy.init_node("localisation")
 
         # Set the loop rate to 100 Hz
@@ -23,25 +23,27 @@ class LocalizationNode:
         self.base_time = rospy.Time.now()
 
         # Define the wheelbase and radius of the robot
+        self.first = True
         self.wheelbase = 0.191 
         self.radius = 0.05 
+        self.wr_speed = 0.0
+        self.wl_speed = 0.0
 
         # Initialize the robot's pose
         self.pose = PoseStamped()
         self.pose.header.frame_id = "odom"
-        self.pose.child_frame_id = "base_link"
+        #self.pose.child_frame_id = "base_link"
 
         # Create a publisher for the robot's odometry
         self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10)
 
-        # Create a TransformBroadcaster
+        # Create a TransformBroadcaster Hace la trasnformada xd
         self.odom_broadcaster = TransformBroadcaster()
 
         # Subscribe to the left and right wheel speeds
         rospy.Subscriber("/wr", Float64, self.wr_callback)
         rospy.Subscriber("/wl", Float64, self.wl_callback)
 
-        self.first = True
 
     def wr_callback(self, msg):
         # Callback function for the right wheel speed
