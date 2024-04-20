@@ -20,7 +20,7 @@
 
         <node name="localisation" pkg="puzzlebot_sim" type="localisation.py"/>
 
-        <node name="controller" pkg="puzzlebot_sim" type="controller.py"/>
+        <node name="controller" pkg="puzzlebot_sim" type="Control2.py"/>
 
     
     

@@ -60,7 +60,7 @@ class Controller:
                 # Controlador proporcional para la distancia
                 controlador_vl = self.kp_dist * error_dist
 
-                # Controlador proporcional para el ángulo
+                # Controlador proporcional para el angulo
                 controlador_vang = self.kp_ang * error_ang
 
                 # Publicar las velocidades en /cmd_vel
@@ -68,8 +68,32 @@ class Controller:
                 self.msg.linear.x = controlador_vl
                 self.pose_pub.publish(self.msg)
 
-                # Pausa para mantener la frecuencia de publicación
+                # Pausa para mantener la frecuencia de publicacion
                 self.rate.sleep()
+                if self.error_dist < 0.15:
+                    self.error_dist=0
+                if self.error_ang < 0.15 and self.error_ang > -0.15:
+                    self.error_ang=0
+                if self.error_ang==0 and self.error_dist==0 and self.index<len(self.x_list)-1:
+                    #self.index+=1
+                    self.index+=1
+                    
+                if self.index==len(self.x_list)-1:
+                    self.error_ed=0
+                    self.error_eang=0
+                    self.velocidad_l=0
+                    self.velocidad_ang=0
+                else:
+    #Publicar las velocidades del /cmd_vel solo si no hemos alcanzado el final de la lista
+                    self.msg.angular.z = self.velocidad_ang
+                    self.msg.linear.x = self.velocidad_l
+                    rospy.loginfo(self.index)
+                    
+                    print_info = "%3f | %3f  " %(self.velocidad_l,self.velocidad_ang)
+                    #rospy.loginfo(print_info)
+                    self.pose_pub.publish(self.msg)
+                    self.rate.sleep()
+
 
 if __name__== "__main__":
     controller = Controller()
