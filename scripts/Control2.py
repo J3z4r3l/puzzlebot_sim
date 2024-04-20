@@ -91,7 +91,7 @@ class Controller:
                     self.msg.linear.x = self.velocidad_l
                     rospy.loginfo(self.index)
                     
-                    print_info = "%3f | %3f  " %(self.velocidad_l,self.velocidad_ang)
+                    print_info = "%3f | %3f  " %(self.index,self.error_dist)
                     #rospy.loginfo(print_info)
                     self.pose_pub.publish(self.msg)
                     self.rate.sleep()
