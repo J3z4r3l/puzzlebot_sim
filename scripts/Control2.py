@@ -21,8 +21,11 @@ class Controller:
         self.y_list = [0, 0, 0, 0, 0]
         self.index = 0
         self.first=True
-        
 
+        self.error_dist=0.0
+        self.error_ang=0.0
+        self.velocidad_l=0
+        self.velocidad_ang=0
 
         # Inicializar nodos
         rospy.init_node("controller")
@@ -54,14 +57,14 @@ class Controller:
                 dt = (self.current_time - self.previous_time)
                 self.previous_time = self.current_time
             
-                error_dist = np.sqrt(np.square(self.x_list[self.index] - self.x) + np.square(self.y_list[self.index] - self.y))
-                error_ang = self.wrap_to_Pi(np.arctan2(self.y_list[self.index] - self.y, self.x_list[self.index] - self.x) - self.ori_w)
+                self.error_dist = np.sqrt(np.square(self.x_list[self.index] - self.x) + np.square(self.y_list[self.index] - self.y))
+                self.error_ang = self.wrap_to_Pi(np.arctan2(self.y_list[self.index] - self.y, self.x_list[self.index] - self.x) - self.ori_w)
 
                 # Controlador proporcional para la distancia
-                controlador_vl = self.kp_dist * error_dist
+                controlador_vl = self.kp_dist * self.error_dist
 
                 # Controlador proporcional para el angulo
-                controlador_vang = self.kp_ang * error_ang
+                controlador_vang = self.kp_ang * self.error_ang
 
                 # Publicar las velocidades en /cmd_vel
                 self.msg.angular.z = controlador_vang
@@ -69,7 +72,6 @@ class Controller:
                 self.pose_pub.publish(self.msg)
 
                 # Pausa para mantener la frecuencia de publicacion
-                self.rate.sleep()
                 if self.error_dist < 0.15:
                     self.error_dist=0
                 if self.error_ang < 0.15 and self.error_ang > -0.15:
