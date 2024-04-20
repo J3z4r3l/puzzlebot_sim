@@ -13,13 +13,15 @@ class Controller:
         self.ki_dist = 0.1  # Constante integral para el control de la distancia
         self.kd_dist = 0.1  # Constante derivativa para el control de la distancia
 
-        # Configurar parametros del controlador PID para el ángulo
+        # Configurar parametros del controlador PID para el angulo
         self.kp_ang = 0.5   # Constante proporcional para el control angular
         self.ki_ang = 0.1   # Constante integral para el control angular
         self.kd_ang = 0.1   # Constante derivativa para el control angular
 
         self.integral_dist=0.0
         self.integral_ang=0.0
+        self.prev_error_dist=0.0
+        self.prev_error_ang=0.0
 
         # Variables de estado
         self.x = 0.0
@@ -35,6 +37,7 @@ class Controller:
         self.error_ang=0.0
         self.velocidad_l=0
         self.velocidad_ang=0
+        
 
         # Inicializar nodos
         rospy.init_node("controller")
@@ -66,19 +69,19 @@ class Controller:
                 dt = (self.current_time - self.previous_time)
                 self.previous_time = self.current_time
             
-                self.error_dist = np.sqrt(np.square(self.x_list[self.index] - self.x) + np.square(self.y_list[self.index] - self.y))
+                self.error_dist = np.sqrt(np.square(self.y_list[self.index] - self.y) + np.square(self.x_list[self.index] - self.x))
                 self.error_ang = self.wrap_to_Pi(np.arctan2(self.y_list[self.index] - self.y, self.x_list[self.index] - self.x) - self.ori_w)
 
                  # Controlador PID para la distancia
                 self.integral_dist += self.error_dist * dt
                 derivative_dist = (self.error_dist - self.prev_error_dist) / dt
-                controlador_vl = self.kp_dist * self.error_dist + self.ki_dist * self.integral_dist + self.kd_dist * derivative_dist
+                self.velocidad_l = self.kp_dist * self.error_dist + self.ki_dist * self.integral_dist + self.kd_dist * derivative_dist
                 self.prev_error_dist = self.error_dist
 
-                # Controlador PID para el ángulo
+                # Controlador PID para el angulo
                 self.integral_ang += self.error_ang * dt
                 derivative_ang = (self.error_ang - self.prev_error_ang) / dt
-                controlador_vang = self.kp_ang * self.error_ang + self.ki_ang * self.integral_ang + self.kd_ang * derivative_ang
+                self.velocidad_l = self.kp_ang * self.error_ang + self.ki_ang * self.integral_ang + self.kd_ang * derivative_ang
                 self.prev_error_ang = self.error_ang
 
                 # Pausa para mantener la frecuencia de publicacion
@@ -101,7 +104,7 @@ class Controller:
                     self.msg.linear.x = self.velocidad_l
                     #rospy.loginfo(self.index)
                     
-                    print_info = "%3f | %3f  " %(self.index,self.error_ang)
+                    print_info = "%3f | %3f  " %(self.index,self.error_dist)
                     rospy.loginfo(print_info)
                     self.pose_pub.publish(self.msg)
                     self.rate.sleep()
