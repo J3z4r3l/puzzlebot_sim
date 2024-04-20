@@ -83,7 +83,6 @@ class Simulation:
      def simulate(self):
           self.pose_stamped()
           self.init_joints()
-
           theta=0.0
           x_dot=0.0
           y_dot=0.0

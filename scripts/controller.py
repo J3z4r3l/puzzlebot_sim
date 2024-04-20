@@ -48,12 +48,7 @@ class Controller:
         self.pose_pub = rospy.Publisher('/cmd_vel',Twist,queue_size=10)
 
         self.msg = Twist()
-        self.msg.linear.x = 0
-        self.msg.linear.y = 0
-        self.msg.linear.z = 0
-        self.msg.angular.x = 0
-        self.msg.angular.y = 0
-        self.msg.angular.z = 0
+        
 
         self.rate = rospy.Rate(10)
     def odom_callback(self, data):
@@ -62,15 +57,6 @@ class Controller:
         self.ori_w = data.pose.pose.orientation.w
 
     
-    def stop(self):
-        print("Stopping")
-        self.msg.linear.x = 0
-        self.msg.linear.y = 0
-        self.msg.linear.z = 0
-        self.msg.angular.x = 0
-        self.msg.angular.y = 0
-        self.msg.angular.z = 0
-        self.pose_pub.publish(self.msg)
     def wrap_to_Pi(self,theta):
         result = np.fmod((theta + np.pi),(2 * np.pi))
         if(result < 0):
@@ -88,7 +74,7 @@ class Controller:
                 self.current_time = rospy.get_time() 
                 dt = (self.current_time - self.previous_time)
                 self.previous_time = self.current_time
-                self.error_ang = self.wrap_to_Pi(np.arctan2(self.y_list[self.index]-self.y, self.x_list[self.index]-self.x) - (self.ori_w-1))
+                self.error_ang = np.arctan2(self.y_list[self.index]-self.y, self.x_list[self.index]-self.x) - (self.ori_w-1)
                 self.error_dist = np.sqrt(np.square(self.x_list[self.index]-self.x) + np.square(self.y_list[self.index]-self.y))
                 rospy.loginfo(self.error_dist)
                 

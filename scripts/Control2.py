@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+import rospy
+from std_msgs.msg import Float32
+from geometry_msgs.msg import Twist
+import numpy as np
+from nav_msgs.msg import Odometry
+
+
+class Controller:
+    def __init__(self):
+        # Configurar parametros del controlador proporcional lineal y angular
+        self.kp_dist = 0.5  # Constante proporcional para el control de la distancia
+        self.kp_ang = 0.5   # Constante proporcional para el control angular
+
+        # Variables de estado
+        self.x = 0.0
+        self.y = 0.0
+        self.ori_w = 0.0
+        self.index = 0
+        self.x_list = [1, 2, 3, 4, 0]
+        self.y_list = [0, 0, 0, 0, 0]
+        self.index = 0
+        self.first=True
+        
+
+
+        # Inicializar nodos
+        rospy.init_node("controller")
+        rospy.Subscriber("/odom", Odometry, self.odom_callback)
+        self.pose_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+        self.msg = Twist()
+        self.rate = rospy.Rate(10)
+
+    def odom_callback(self, data):
+        self.x = data.pose.pose.position.x
+        self.y = data.pose.pose.position.y
+        self.ori_w = self.wrap_to_Pi(data.pose.pose.orientation.w)
+
+    def wrap_to_Pi(self,theta):
+        result = np.fmod((theta + np.pi),(2 * np.pi))
+        if(result < 0):
+                result += 2 * np.pi
+        return result - np.pi
+
+
+    def run(self):
+        while not rospy.is_shutdown():
+            if self.first:
+                self.current_time = rospy.get_time() 
+                self.previous_time = rospy.get_time()
+                self.first = False
+            else:
+                self.current_time = rospy.get_time() 
+                dt = (self.current_time - self.previous_time)
+                self.previous_time = self.current_time
+            
+                error_dist = np.sqrt(np.square(self.x_list[self.index] - self.x) + np.square(self.y_list[self.index] - self.y))
+                error_ang = self.wrap_to_Pi(np.arctan2(self.y_list[self.index] - self.y, self.x_list[self.index] - self.x) - self.ori_w)
+
+                # Controlador proporcional para la distancia
+                controlador_vl = self.kp_dist * error_dist
+
+                # Controlador proporcional para el ángulo
+                controlador_vang = self.kp_ang * error_ang
+
+                # Publicar las velocidades en /cmd_vel
+                self.msg.angular.z = controlador_vang
+                self.msg.linear.x = controlador_vl
+                self.pose_pub.publish(self.msg)
+
+                # Pausa para mantener la frecuencia de publicación
+                self.rate.sleep()
+
+if __name__== "__main__":
+    controller = Controller()
+    try:
+        controller.run()
+    except rospy.ROSInterruptException:
+        None
