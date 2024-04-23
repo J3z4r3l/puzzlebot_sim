@@ -70,7 +70,7 @@ class SquareTrajectory:
         # Mover al punto (1,0)
         self.move(linear_speed=0.2, angular_speed=0.2, distance=1)
 
-        # Mover al punto (1,1)
+        # Mover al punto (1,1) ahaha
         self.move(linear_speed=0.2, angular_speed=0.2, distance=1)
 #
         ## Mover al punto (0,1)
