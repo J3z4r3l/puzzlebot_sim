@@ -1,27 +1,19 @@
 #!/usr/bin/env python
-# This is a ROS node that subscribes to the left and right wheel speeds
-# and publishes the robot's odometry.
-
 import rospy 
 import numpy as np
 from std_msgs.msg import Float32
 from sensor_msgs.msg import JointState
 from geometry_msgs.msg import Twist, PoseStamped
 from nav_msgs.msg import Odometry
-from tf.transformations import quaternion_from_euler
+from geometry_msgs.msg import TransformStamped
 from tf import TransformBroadcaster
 
 class LocalizationNode:
-        # Initialize the ROS node named "localisation"
     def __init__(self):
+        # Initialize the robot's pose
         rospy.init_node("localisation")
-
-        # Set the loop rate to 100 Hz
         self.rate = rospy.Rate(100) 
-
-        # Save the current time for calculating the time delta
-        self.base_time = rospy.Time.now()
-        self.theta = 0
+        self.previous_time = rospy.Time.now()
 
         # Define the wheelbase and radius of the robot
         self.first = True
@@ -29,96 +21,84 @@ class LocalizationNode:
         self.radius = 0.05 
         self.wr_speed = 0.0
         self.wl_speed = 0.0
+        self.theta = 0
+        self.snt_tnf=TransformBroadcaster()
+        self.pose_robot=PoseStamped()
 
-        # Initialize the robot's pose
-        self.pose = PoseStamped()
-        self.pose.header.frame_id = "odom"
-        
-        # Create a publisher for the robot's odometry
         self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10)
-
-        # Create a TransformBroadcaster Hace la trasnformada xd
-        self.odom_broadcaster = TransformBroadcaster()
-
-        # Subscribe to the left and right wheel speeds
         rospy.Subscriber("/wr", Float32, self.wr_callback)
         rospy.Subscriber("/wl", Float32, self.wl_callback)
+        rospy.Subscriber("/pose", PoseStamped, self.pose_stamped)
+         
+    def wr_callback(self, v_r):
+        self.wr_speed = v_r.data
+
+    def wl_callback(self, v_l):
+        self.wl_speed = v_l.data
+    
+    def pose_stamped(self, msg):
+    # Update robot's pose
+        self.pose_robot = msg
+    
+    def get_odometry(self,current_time):
+        odom_msg = Odometry()
+        odom_msg.header.stamp = current_time
+        odom_msg.header.frame_id = "odom" #or odom
+        odom_msg.child_frame_id = "base_link"
+        odom_msg.pose.pose.position.x = self.pose_robot.pose.position.x
+        odom_msg.pose.pose.position.y = self.pose_robot.pose.position.y
+        odom_msg.pose.pose.orientation.x = self.pose_robot.pose.orientation.x
+        odom_msg.pose.pose.orientation.y = self.pose_robot.pose.orientation.y
+        odom_msg.pose.pose.orientation.z = self.pose_robot.pose.orientation.z
+        odom_msg.pose.pose.orientation.w = self.pose_robot.pose.orientation.w
+        return odom_msg
+
+    def transform(self,odom):
+        tnf=TransformStamped()
+        tnf.header.stamp=rospy.Time.now()
+        tnf.header.frame_id= "odom"
+        tnf.transform.translation.x = odom.pose.pose.position.x
+        tnf.transform.translation.y = odom.pose.pose.position.y
+        tnf.transform.translation.z = 0.0
+        #rotation
+        tnf.transform.rotation.x = odom.pose.pose.orientation.x
+        tnf.transform.rotation.y = odom.pose.pose.orientation.y
+        tnf.transform.rotation.z = odom.pose.pose.orientation.z
+        tnf.transform.rotation.w = odom.pose.pose.orientation.w
+        self.snt_tnf.sendTransform(
+        (tnf.transform.translation.x, tnf.transform.translation.y, tnf.transform.translation.z),
+        (tnf.transform.rotation.x, tnf.transform.rotation.y, tnf.transform.rotation.z, tnf.transform.rotation.w),
+        rospy.Time.now(),
+        "base_link",
+        tnf.header.frame_id
+    )
 
 
-    def wr_callback(self, msg):
-        # Callback function for the right wheel speed
-        self.wr_speed = msg.data
-    def wrap_to_Pi(self,theta):
-           result = np.fmod((theta + np.pi),(2 * np.pi))
-           if(result < 0):
-                result += 2 * np.pi
-           return result - np.pi
-     
-
-    def wl_callback(self, msg):
-        # Callback function for the left wheel speed
-        self.wl_speed = msg.data
-
+    
     def calculate_odometry(self):
-          # Inicializa theta fuera del bucle
+        current_time = rospy.Time.now()  # Get current time
+    
         if self.first:
-            self.previous_time = rospy.Time.now()
+            self.previous_time = current_time
             self.first = False
         else:
-            # Calculate the robot's odometry
-            current_time = rospy.Time.now()
-            dt = (current_time - self.base_time).to_sec()
-            self.base_time = current_time
-
-            wr = self.wr_speed
-            wl = self.wl_speed
+            dt = (current_time - self.previous_time).to_sec()  # get dt
+            self.previous_time = current_time
+    
+            # Create Odometry message
+            odom_msg = self.get_odometry(current_time)
             
-
-            # Calculate robot's linear and angular speed
-            v = self.radius * (wr + wl) / 2.0
-            w = self.radius * (wr - wl) / self.wheelbase
-
-            rospy.loginfo(v)
-            #rospy.loginfo(w)
-
-
-            # Update robot's pose
-            self.pose.pose.position.x += v * np.cos(self.theta) * dt
-            self.pose.pose.position.y += v * np.sin(self.theta) * dt
-            self.theta = self.wrap_to_Pi(self.theta + w * dt)  # Actualiza theta correctamente
-            rospy.loginfo(self.theta)
-            quaternion = quaternion_from_euler(0, 0, self.theta)
-            self.pose.pose.orientation.x = quaternion[0]
-            self.pose.pose.orientation.y = quaternion[1]
-            self.pose.pose.orientation.z = quaternion[2]
-            self.pose.pose.orientation.w = quaternion[3]
-            rospy.loginfo(self.pose.pose.orientation.w)
-            
-
-            # Create and publish Odometry message
-            odom_msg = Odometry()
-            odom_msg.header.stamp = current_time
-            odom_msg.header.frame_id = "odom"
-            odom_msg.child_frame_id = "base_link"
-            odom_msg.pose.pose = self.pose.pose
+            # Publish Odometry message
             self.odom_pub.publish(odom_msg)
-
-            # Publish the transform from odometry to base_link
-            self.odom_broadcaster.sendTransform(
-                (self.pose.pose.position.x, self.pose.pose.position.y, self.pose.pose.position.z),
-                (quaternion[0], quaternion[1], quaternion[2], quaternion[3]),
-                current_time,
-                "base_link",
-                "odom"
-            )
-
-
-
+    
+            # Publish transform
+            self.transform(odom_msg)
+    
     def run(self):
-        # Run the node
-        while not rospy.is_shutdown():
-            self.calculate_odometry()
-            self.rate.sleep()
+           # Run the node
+           while not rospy.is_shutdown():
+               self.calculate_odometry()
+               self.rate.sleep()
 
 if __name__ == "__main__":
     try:
