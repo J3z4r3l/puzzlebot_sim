@@ -15,15 +15,19 @@
     
         <node pkg="robot_state_publisher" type="robot_state_publisher" name="simulated_state_publisher" output="screen"/>
 
-        <!--Joint State Publisher -->     
+        <!--Joint State Publisher....test nonlinear    
         <node name="puzz_sim" pkg="puzzlebot_sim" type="puzzlebot_kinematic_model.py"/>
 
         <node name="localisation" pkg="puzzlebot_sim" type="localisation.py"/>
 
         <node name="controller" pkg="puzzlebot_sim" type="Control2.py"/>
-     <!--   <node name="controller" pkg="puzzlebot_sim" type="Control2.py"/>
--->
+   -->  
+        <!--Test Linear -->
+        <node name="puzz_sim" pkg="puzzlebot_sim" type="puzzlebot_kinematic_model.py"/>
 
+        <node name="localisation" pkg="puzzlebot_sim" type="Linealizacion.py"/>
+
+        <node name="square_trajectory_node" pkg="puzzlebot_sim" type="Control_lazo_abierto.py"/>
     
     
     

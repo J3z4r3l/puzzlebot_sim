@@ -23,7 +23,8 @@ class LocalizationNode:
         self.wr_speed = 0.0
         self.wl_speed = 0.0
         self.theta = 0
-        self.x,self.y=0
+        self.x=0
+        self.y=0
         self.snt_tnf=TransformBroadcaster()
         self.pose_robot=PoseStamped()
 
@@ -94,7 +95,7 @@ class LocalizationNode:
 
 
     def get_position(self,x,y,theta,dt):
-        v,w=self.get_velocity(self)
+        v,w=self.get_velocity()
         x = x-(v * np.sin(self.theta) * dt*theta)
         y = y+v * np.cos(self.theta) * dt*theta
         theta = self.wrap_to_Pi(w)  # Actualiza theta correctamente
@@ -124,7 +125,7 @@ class LocalizationNode:
             self.odom_pub.publish(odom_msg)
     
             # Publish transform
-            #self.transform(odom_msg)
+            self.transform(odom_msg)
     
     def run(self):
            # Run the node
