@@ -48,13 +48,13 @@ class LocalizationNode:
         self.pose_robot.pose.orientation.z = quaternion[2]
         self.pose_robot.pose.orientation.w = quaternion[3]
     
-    def get_odometry(self,current_time, x_dt, y_dt):
+    def get_odometry(self,current_time):
         odom_msg = Odometry()
         odom_msg.header.stamp = current_time
         odom_msg.header.frame_id = "odom" #or odom
         odom_msg.child_frame_id = "base_link"
-        odom_msg.pose.pose.position.x = x_dt
-        odom_msg.pose.pose.position.y = y_dt
+        odom_msg.pose.pose.position.x = self.pose_robot.pose.position.x
+        odom_msg.pose.pose.position.y = self.pose_robot.pose.position.y
         odom_msg.pose.pose.orientation.x = self.pose_robot.pose.orientation.x
         odom_msg.pose.pose.orientation.y = self.pose_robot.pose.orientation.y
         odom_msg.pose.pose.orientation.z = self.pose_robot.pose.orientation.z
@@ -80,7 +80,13 @@ class LocalizationNode:
         "base_link",
         tnf.header.frame_id
     )
-        
+    
+    def wrap_to_Pi(self,theta):
+        result = np.fmod((theta + np.pi),(2 * np.pi))
+        if(result < 0):
+                result += 2 * np.pi
+        return result - np.pi
+    
     def get_velocity(self):
         v = self.radius * (self.wr_speed + self.wl_speed) / 2.0
         w = self.radius * (self.wr_speed - self.wl_speed) / self.wheelbase
@@ -108,7 +114,7 @@ class LocalizationNode:
             
             #get pose
             self.x,self.y,self.theta=self.get_position(self.x,self.y,self.theta,dt)
-            self.get_pose_stamped(self.x,self.y,self.w)
+            self.get_pose_stamped(self.x,self.y,self.theta)
 
     
             # Create Odometry message
