@@ -18,7 +18,7 @@ class Controller:
         self.prev_error_dist=0.0
         self.velocidad_l=0
         # PID angulo
-        self.kp_ang = 0.2  
+        self.kp_ang = 0.3  
         self.ki_ang = 0.0
         self.kd_ang = 0.00  
         self.error_ang=0.0
@@ -31,8 +31,8 @@ class Controller:
         self.ori_z = 0.0
         #Lista de puntos 
         self.index = 0
-        self.x_list = [-1, 1, 0, 0, 0]
-        self.y_list = [0, 1, 1, 0, 0]
+        self.x_list = [1, 0, 0, 0, 0]
+        self.y_list = [1, 1, 0, 0, 0]
         self.first=True
         self.pose_theta=0
         
@@ -59,13 +59,11 @@ class Controller:
     def error_a_l(self,index):
         error_ang_w = self.wrap_to_Pi(np.arctan2(self.y_list[index] - self.y, self.x_list[index] - self.x))
         error_ang = error_ang_w - self.ori_z
-        rospy.loginfo(error_ang_w)
-        rospy.loginfo(error_ang)
+        #rospy.loginfo(error_ang_w)
+        #rospy.loginfo(error_ang)
         
         error_dist = np.sqrt((self.x_list[index] - self.x) ** 2 + (self.y_list[index] - self.y) ** 2)
         return error_ang, error_dist
-
-    
    
     def pid_controller(self, dt, error_ang, error_dist, prev_error_dist, prev_error_ang): 
         #PID Dist
@@ -84,10 +82,12 @@ class Controller:
                 self.current_time = rospy.get_time() 
                 self.previous_time = rospy.get_time()
                 self.first = False
+            
             else:
                 self.current_time = rospy.get_time() 
                 dt = (self.current_time - self.previous_time) #get dt
                 self.previous_time = self.current_time
+                
                 self.error_ang, self.error_dist = self.error_a_l(self.index)
                
                 # PID controller 
@@ -98,30 +98,23 @@ class Controller:
                 if self.error_ang < 0.1 and self.error_ang>-0.1:
                     self.velocidad_a=0.0
                     self.error_ang = 0
-                #    if self.index < len(self.x_list)-1:
-                #        self.index += 1
 
                 if self.error_dist < 0.1 and self.error_dist>-0.1:
                     self.velocidad_l=0.0
-
-
+                    self.error_dist = 0
 
                 if self.error_ang < 0.1 and self.error_ang>-0.1 and self.error_dist < 0.1 and self.error_dist>-0.1 and self.index < len(self.x_list)-1:
                     self.index += 1
-                    self.error_ang = 0
-                    self.error_dist = 0
-
 
                 if self.index == len(self.x_list)-1:
-                    self.error_dist = 0
-                    self.error_ang = 0
                     self.velocidad_l = 0
                     self.velocidad_a = 0
+               
                 else:
                     self.msg.angular.z= self.velocidad_a
-                    self.msg.linear.x =0.0#self.velocidad_l
+                    self.msg.linear.x =self.velocidad_l
 
-                    print_info = "%3f | %3f | %3f " %(self.index, self.ori_z, self.error_ang)
+                    print_info = "%3f | %3f | %3f " %(self.index, self.error_dist, self.error_ang)
                     rospy.loginfo(print_info)
                     self.pose_pub.publish(self.msg)
                     self.rate.sleep()

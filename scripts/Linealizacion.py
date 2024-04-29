@@ -94,12 +94,16 @@ class LocalizationNode:
         return v,w
 
 
-    def get_position(self,x,y,theta,dt):
+    def get_position(self,theta,dt):
         v,w=self.get_velocity()
-        x = x-(v * np.sin(self.theta) * dt*theta)
-        y = y+v * np.cos(self.theta) * dt*theta
-        theta = self.wrap_to_Pi(w)  # Actualiza theta correctamente
-        return x,y,theta
+        self.x += -(v * np.sin(self.theta) * dt)
+        self.y += v * np.cos(self.theta) * dt
+        self.theta = self.wrap_to_Pi(w*dt)  # Actualiza theta correctamente
+        return self.x,self.y,theta
+        
+        #x = v * np.cos(self.theta) * dt
+        #y =v * np.sin(self.theta) * dt
+        #theta = self.wrap_to_Pi(w*dt+theta)  # Actualiza 
 
 
     
@@ -114,7 +118,8 @@ class LocalizationNode:
             self.previous_time = current_time
             
             #get pose
-            self.x,self.y,self.theta=self.get_position(self.x,self.y,self.theta,dt)
+            self.x,self.y,self.theta=self.get_position(self.theta,dt)
+            self.theta+=self.theta
             self.get_pose_stamped(self.x,self.y,self.theta)
 
     
