@@ -20,8 +20,8 @@
 
         <node name="localisation" pkg="puzzlebot_sim" type="localisation.py"/>
 
-        <node name="controller" pkg="puzzlebot_sim" type="Control2.py"/>
-    
+    <!--    <node name="controller" pkg="puzzlebot_sim" type="Control2.py"/>
+    -->
         <!--Test Linear 
         <node name="puzz_sim" pkg="puzzlebot_sim" type="puzzlebot_kinematic_model.py"/>
 
