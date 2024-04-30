@@ -41,8 +41,8 @@ class LocalizationNode:
     
     def get_pose_stamped(self,x,y,theta):
     # Update robot's pose
-        self.pose_robot.pose.position.x += x       
-        self.pose_robot.pose.position.y += y       
+        self.pose_robot.pose.position.x = x       
+        self.pose_robot.pose.position.y = y       
         quaternion = quaternion_from_euler(0, 0, theta)
         self.pose_robot.pose.orientation.x = quaternion[0]
         self.pose_robot.pose.orientation.y = quaternion[1]
@@ -93,11 +93,11 @@ class LocalizationNode:
         w = self.radius * (self.wr_speed - self.wl_speed) / self.wheelbase
         return v,w
 
-
+###Aqui 
     def get_position(self,theta,dt):
         v,w=self.get_velocity()
-        self.x = self.x-(v * np.sin(self.theta)*self.x * dt)
-        self.y = self.y+v * np.cos(self.theta)*self.y * dt
+        self.x = self.x-(v * np.sin(self.theta) * dt)
+        self.y = self.y+v * np.cos(self.theta)* dt
         self.theta = self.wrap_to_Pi(w*dt+theta)  # Actualiza theta correctamente
         return self.x,self.y,theta
         
