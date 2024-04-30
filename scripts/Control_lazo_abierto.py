@@ -47,38 +47,18 @@ class SquareTrajectory:
             self.cmd_vel_pub.publish(twist)
             self.rate.sleep()
 
-        twist.angular.z = 0.0
         self.cmd_vel_pub.publish(twist)
         self.rate.sleep()
 
-    def move_ang(self, angular_speed):
-        twist = Twist()
-        angular_distance = np.pi / 4
-        
-        time_to_rotate = angular_distance / angular_speed
-
-        # Crear mensaje Twist para rotar
-        twist.angular.z = angular_speed
-
-        # Publicar el mensaje para rotar
-        start_time = rospy.Time.now()
-        while (rospy.Time.now() - start_time).to_sec() < time_to_rotate:
-            self.cmd_vel_pub.publish(twist)
-            self.rate.sleep()
-
-        twist.angular.z = 0.0
-        self.cmd_vel_pub.publish(twist)
-        self.rate.sleep()
-
+   
 
     def run(self):
         # Mover al punto (1,0)
-        #self.move(linear_speed=0.01, angular_speed=0.0, distance=100)
-        #self.move(linear_speed=0.1, angular_speed=0.0, distance=100)
-        #self.move(linear_speed=0.1, angular_speed=0.0, distance=100)
-        #self.move(linear_speed=0.1, angular_speed=0.0, distance=100)
-        # Mover al punto (1,1) ahaha
-        #self.move(linear_speed=0.2, angular_speed=0.2, distance=1)
+        self.move(linear_speed=0.1, angular_speed=0.1, distance=1)
+        self.move(linear_speed=0.1, angular_speed=0.1, distance=1)
+        self.move(linear_speed=0.1, angular_speed=0.1, distance=1)
+        self.move(linear_speed=0.1, angular_speed=0.1, distance=1)
+        ## Mover al punto (1,1) ahaha
         ## Mover al punto (0,1)
         #self.move(linear_speed=0.2, angular_speed=0.2, distance=1)
 
@@ -95,12 +75,7 @@ class SquareTrajectory:
         #self.move_ang(angular_speed=0.2)
         #self.move(linear_speed=0.2, angular_speed=0.2, distance=1)
         #self.move(linear_speed=0.2, angular_speed=0.0, distance=1)
-        while not rospy.is_shutdown():
-           twist = Twist()
-           twist.linear.x=0.1
-           twist.angular.z=0.1
-           self.cmd_vel_pub.publish(twist)
-           self.rate.sleep()
+        
 
 
         
