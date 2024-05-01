@@ -57,6 +57,7 @@ class LocalizationNode:
         tnf=TransformStamped()
         tnf.header.stamp=rospy.Time.now()
         tnf.header.frame_id= "odom"
+        tnf.child_frame_id="base_lonk"
         tnf.transform.translation.x = odom.pose.pose.position.x
         tnf.transform.translation.y = odom.pose.pose.position.y
         tnf.transform.translation.z = 0.0
