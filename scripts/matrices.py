@@ -45,6 +45,7 @@ def multiply_3x2_by_2x2(A, B):
                 result[i][j] += A[i][k] * B[k][j]
 
     return result
+
 def get_covariance(H,Covariance,Qk):
         #A*B*A-1+C
         A_B=multiply_matrices(H,Covariance)

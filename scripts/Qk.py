@@ -130,14 +130,14 @@ class uncertains:
         return Covariance
 
 
-    def get_odometry(self,current_time,x,y,theta):
+    def get_odometry(self,current_time,covarianza):
         odom_msg = Odometry()
         odom_msg.header.stamp = current_time
         odom_msg.header.frame_id = "odom" #or odom
         odom_msg.child_frame_id = "base_link"
-        odom_msg.pose.covariance[0] = 0.001
-        odom_msg.pose.covariance[7] = 0.001
-        odom_msg.pose.covariance[35] = 0.001
+        odom_msg.pose.covariance[0] = covarianza[0]
+        odom_msg.pose.covariance[7] = covarianza[1]
+        odom_msg.pose.covariance[35] = covarianza[2]
         return odom_msg
     
     def wrap_to_Pi(self,theta):
