@@ -49,10 +49,16 @@ class LocalizationNode:
         x_dot= vel*np.cos(self.theta) #vel
         y_dot=vel*np.sin(self.theta) #vel
         theta_dot=w
+        #Linealizado
+        #x_dot= -vel*np.sin(self.theta) #vel
+        #y_dot=vel*np.cos(self.theta) #vel
+        #theta_dot=w
+        
         self.x += x_dot*dt
         print(w)
         self.y += y_dot*dt
         self.theta += theta_dot*dt
+        self.wrap_to_Pi(self.theta)
         return    
       
     def get_odometry(self,current_time,x,y,theta):
@@ -67,6 +73,10 @@ class LocalizationNode:
         odom_msg.pose.pose.orientation.y = quaternion[1]
         odom_msg.pose.pose.orientation.z = quaternion[2]
         odom_msg.pose.pose.orientation.w = quaternion[3]
+        #odom_msg.pose.covariance[0] = 0.001
+        #odom_msg.pose.covariance[7] = 0.001
+        #odom_msg.pose.covariance[35] = 0.001
+
         
         return odom_msg
 
@@ -90,7 +100,13 @@ class LocalizationNode:
         "base_link",
         tnf.header.frame_id
     )
-        
+
+    def wrap_to_Pi(self,theta):
+        result = np.fmod((theta + np.pi),(2 * np.pi))
+        if(result < 0):
+                result += 2 * np.pi
+        return result - np.pi
+    
     def calculate_odometry(self):
         current_time = rospy.Time.now()  # Get current time
     
