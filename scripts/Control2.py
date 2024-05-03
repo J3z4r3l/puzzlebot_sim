@@ -18,9 +18,9 @@ class Controller:
         self.prev_error_dist=0.0
         self.velocidad_l=0
         # PID angulo
-        self.kp_ang = 0.5  
+        self.kp_ang = 1  
         self.ki_ang = 0.05
-        self.kd_ang = 0.00  
+        self.kd_ang = 0.02  
         self.error_ang=0.0
         self.velocidad_a=0
         self.integral_ang=0.0
@@ -32,10 +32,11 @@ class Controller:
         self.ori_z_ant= 0.0
         #Lista de puntos 
         self.index = 0
-        self.x_list = [-1, 0, 1, 0, 0]
-        self.y_list = [-0.0, -1, 0, 1, 0]
+        self.x_list = [1, 1, 2, 0, 0]
+        self.y_list = [0, 1, 1, 0, 0]
         self.first=True
-        self.bandera=False
+        self.last_index = None
+        self.last_error_ang_w = None
         
         # Inicializar nodos
         rospy.init_node("controller")
@@ -49,7 +50,7 @@ class Controller:
     def odom_callback(self, data):
         self.x = data.pose.pose.position.x
         self.y = data.pose.pose.position.y
-        self.ori_z = abs(data.pose.pose.orientation.z*np.pi)
+        self.ori_z = data.pose.pose.orientation.z*np.pi
         #2pi?
 
     def wrap_to_Pi(self,theta):
@@ -60,49 +61,44 @@ class Controller:
         #return theta
     
     def error_a_l(self,index):
-        error_ang_w = np.arctan2(self.y_list[index] - self.y, self.x_list[index] - self.x)
-        #if error_ang_w < 0:
-        #    rospy.loginfo("si")
-        #    error_ang_w += 2 * np.pi
-        if(self.ori_z<self.ori_z_ant):
-            self.bandera= True
-        self.ori_z_ant=self.ori_z
-        if(self.bandera):
-            self.ori_z=-1*self.ori_z
-            print(self.ori_z)
-            print("yoyo")
-        if(self.ori_z<0.005):
-            self.bandera= False
-        if (self.bandera==False):
-            print(self.ori_z)
-            
-            pass
+        last_error_ang_w = np.arctan2(self.y_list[index] - self.y, self.x_list[index] - self.x)
+        if last_error_ang_w>=3.14:
+            if index != self.last_index:
+                self.last_index = index
+                self.last_error_ang_w = np.arctan2(self.y_list[index] - self.y, self.x_list[index] - self.x)
+        else:
+            self.last_error_ang_w = np.arctan2(self.y_list[index] - self.y, self.x_list[index] - self.x)
         
-
-        error_ang = error_ang_w - self.ori_z
+        error_ang_w = self.last_error_ang_w
+        
+        error_ang = abs(error_ang_w) - self.ori_z
         print_info = "%3f  |%3f | %3f " %(error_ang_w,error_ang, self.wrap_to_Pi(error_ang))
         rospy.loginfo(print_info)
 
-        #rospy.loginfo(self.ori_z_ant)
-        
+        rospy.loginfo(self.ori_z)
         error_dist = np.sqrt((self.x_list[index] - self.x) ** 2 + (self.y_list[index] - self.y) ** 2)
+        
         return error_ang, error_dist
    
    
     def pid_controller(self, dt, error_ang, error_dist, prev_error_dist, prev_error_ang): 
         
         #PID Dist
-        if self.error_ang< 0.1 and self.error_ang>-0.1:
-            self.integral_dist += error_dist * dt
-            derivative_dist = (error_dist - prev_error_dist) / dt
-            self.velocidad_l = self.kp_dist * self.error_dist + self.ki_dist * self.integral_dist + self.kd_dist * derivative_dist
+        #if self.error_ang< 0.1 and self.error_ang>-0.1:
+        self.integral_dist += error_dist * dt
+        derivative_dist = (error_dist - prev_error_dist) / dt
+        self.velocidad_l = self.kp_dist * self.error_dist + self.ki_dist * self.integral_dist + self.kd_dist * derivative_dist
        
         #PID Ang     
         self.integral_ang += error_ang * dt
         derivative_ang = (error_ang - prev_error_ang) / dt
         self.velocidad_a = self.kp_ang * error_ang + self.ki_ang * self.integral_ang + self.kd_ang * derivative_ang
+        #if (error_ang<0.005 and error_ang>-0.005):
+        #     self.velocidad_l = self.kp_dist * self.error_dist + self.ki_dist * self.integral_dist + self.kd_dist * derivative_dist
+       
        
         return self.velocidad_l, self.velocidad_a
+
 
     def run(self):
         while not rospy.is_shutdown():
@@ -128,12 +124,13 @@ class Controller:
                     self.error_ang = 0.0
                     #self.index += 1
 
-                if self.error_dist < 0.1 and self.error_dist>-0.1:
+                if self.error_dist < 0.01 and self.error_dist>-0.01:
                     self.velocidad_l=0.0
                     self.error_dist = 0
 
                 if self.error_ang ==0.0  and self.error_dist == 0.0  and self.index < len(self.x_list)-1:
                     self.index += 1
+               
 
                 if self.index == len(self.x_list)-1:
                     self.msg.angular.z= 0.0

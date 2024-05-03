@@ -3,86 +3,31 @@
 import rospy
 from geometry_msgs.msg import Twist
 import numpy as np
+import rospy
+from geometry_msgs.msg import Twist
+import time
 
-class SquareTrajectory:
-    def __init__(self):
-        rospy.init_node('square_trajectory_node')
-        self.cmd_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-        self.rate = rospy.Rate(10)  # 10 Hz
+def send_velocity():
+    rospy.init_node('send_velocity_node', anonymous=True)
+    vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+    rate = rospy.Rate(10)  # 10 Hz
 
-    def move(self, linear_speed, angular_speed, distance):
-        # Calcular el tiempo necesario para moverse a la distancia especificada
-        if linear_speed != 0:
-            time_to_move = distance / linear_speed
+    # Crear el mensaje Twist
+    twist_msg = Twist()
+    twist_msg.angular.z = 0.5  # Velocidad lineal deseada en m/s
 
-        else:
-            time_to_move = 0  
-        
+    start_time = time.time()
 
-        twist = Twist()
-        twist.linear.x = linear_speed
+    while not rospy.is_shutdown() and time.time() - start_time < 4.0:
+        vel_pub.publish(twist_msg)
+        rate.sleep()
 
-        start_time = rospy.Time.now()
-        while (rospy.Time.now() - start_time).to_sec() < time_to_move:
-            self.cmd_vel_pub.publish(twist)
-            self.rate.sleep()
-
-        # Detener el movimiento
-        twist.linear.x = 0.0
-        self.cmd_vel_pub.publish(twist)
-        self.rate.sleep()
-
-        angular_distance = np.pi / 2
-        
-        if angular_speed != 0:
-            time_to_rotate = angular_distance / angular_speed
-        else:
-            time_to_rotate = 0  
-        # Crear mensaje Twist para rotar
-        twist.angular.z = angular_speed
-
-        # Publicar el mensaje para rotar
-        start_time = rospy.Time.now()
-        while (rospy.Time.now() - start_time).to_sec() < time_to_rotate:
-            self.cmd_vel_pub.publish(twist)
-            self.rate.sleep()
-
-        self.cmd_vel_pub.publish(twist)
-        self.rate.sleep()
-
-   
-
-    def run(self):
-        # Mover al punto (1,0)
-        self.move(linear_speed=0.1, angular_speed=0.1, distance=1)
-        self.move(linear_speed=0.1, angular_speed=0.1, distance=1)
-        self.move(linear_speed=0.1, angular_speed=0.1, distance=1)
-        self.move(linear_speed=0.1, angular_speed=0.1, distance=1)
-        ## Mover al punto (1,1) ahaha
-        ## Mover al punto (0,1)
-        #self.move(linear_speed=0.2, angular_speed=0.2, distance=1)
-
-        ## Mover al punto (0,0)
-        #self.move(linear_speed=0.2, angular_speed=0.2, distance=1)
-        #
-        ###ZIGZAG o diamante
-        #self.move_ang(angular_speed=0.2)
-        #self.move(linear_speed=0.2, angular_speed=0.2, distance=1)
-        
-        #self.move_ang(angular_speed=0.2)
-        #self.move(linear_speed=0.2, angular_speed=0.2, distance=1)
-
-        #self.move_ang(angular_speed=0.2)
-        #self.move(linear_speed=0.2, angular_speed=0.2, distance=1)
-        #self.move(linear_speed=0.2, angular_speed=0.0, distance=1)
-        
-
-
-        
+    # Detener el robot al finalizar los 4 segundos
+    twist_msg.angular.z = 0.0
+    vel_pub.publish(twist_msg)
 
 if __name__ == '__main__':
     try:
-        square_trajectory = SquareTrajectory()
-        square_trajectory.run()
+        send_velocity()
     except rospy.ROSInterruptException:
         pass
