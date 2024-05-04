@@ -2,13 +2,9 @@
 import rospy 
 import numpy as np
 from std_msgs.msg import Float32
-from sensor_msgs.msg import JointState
-from geometry_msgs.msg import Twist, PoseStamped
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import TransformStamped
 from tf import TransformBroadcaster
-from tf.transformations import quaternion_from_euler
-
+from std_msgs.msg import Float64MultiArray
 #Here we are only sending covariance matrix so we dont need pos here?
 
 class uncertains:
@@ -17,7 +13,8 @@ class uncertains:
         rospy.init_node("localisation")
         self.rate = rospy.Rate(100) 
         self.previous_time = rospy.Time.now()
-        self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10)
+        #self.odom_pub = rospy.Publisher("/odom", Odometry, queue_size=10)
+        self.matrix_pub = rospy.Publisher("/covariance", Float64MultiArray, queue_size=10)
         rospy.Subscriber("/wr", Float32, self.wr_callback)
         rospy.Subscriber("/wl", Float32, self.wl_callback)
 
@@ -31,8 +28,10 @@ class uncertains:
         self.x=0.0
         self.y=0.0
         self.snt_tnf=TransformBroadcaster()   
-        self.linealization_matrix=[]
-        self.covariance_matrix=[]
+        self.H_matrix=[]
+        self.covariance_matrix=[[0, 0, 0],
+                                [0, 0, 0],
+                                [0, 0,  0]]
         self.Qk_matrix=[]     
           
     def wr_callback(self, v_r):
@@ -88,7 +87,7 @@ class uncertains:
     
     def multiply_3x2_by_2x2(self,A, B):
         if len(A[0]) != len(B):
-            raise ValueError("El número de columnas de la matriz A debe ser igual al número de filas de la matriz B")
+            raise ValueError("El numero de columnas de la matriz A debe ser igual al numero de filas de la matriz B")
 
         result = [[0 for _ in range(len(B[0]))] for _ in range(len(A))]
 
@@ -107,12 +106,11 @@ class uncertains:
            [0, 0,  1 ]]
         return h
 
-    def get_Qk(self,wl,wr,dt):
+    def get_Qk(self,wr,wl,dt):
         const=self.radius*dt
         lin_wl=[[const*np.cos(self.theta)/2, const*np.cos(self.theta)/2],
                 [const*np.sin(self.theta)/2, const*np.sin(self.theta)/2],
                 [const/self.wheelbase, -const/self.wheelbase]]
-        
         covariance_qk=[[wr, 0],
                         [0, wl ]]
     
@@ -122,23 +120,13 @@ class uncertains:
         return Qk 
 
     def get_covariance(self,H,Covariance,Qk):
-        #A*B*A-1+C
+        #A*B*AT+C
         A_B=self.multiply_matrices(H,Covariance)
         H_t=self.transpose_matrix(H)
         product=self.multiply_matrices(A_B,H_t)
         Covariance=self.add_matrices(product,Qk)
         return Covariance
 
-
-    def get_odometry(self,current_time,covarianza):
-        odom_msg = Odometry()
-        odom_msg.header.stamp = current_time
-        odom_msg.header.frame_id = "odom" #or odom
-        odom_msg.child_frame_id = "base_link"
-        odom_msg.pose.covariance[0] = covarianza[0]
-        odom_msg.pose.covariance[7] = covarianza[1]
-        odom_msg.pose.covariance[35] = covarianza[2]
-        return odom_msg
     
     def wrap_to_Pi(self,theta):
         new_matrix = np.fmod((theta + np.pi),(2 * np.pi))
@@ -156,15 +144,16 @@ class uncertains:
             dt = (current_time - self.previous_time).to_sec()  # get dt
             self.previous_time = current_time
 
+            #get the Qk
+            self.Qk_matrix=self.get_Qk(self.wr_speed,self.wl_speed,dt)
+            #get H of linearised model// Here to compute the pos 0
+            self.H_matrix=self.get_H(self.wr_speed,self.wl_speed,dt)
+            #Get the covariance 
+            self.covariance_matrix=self.get_covariance(self.H_matrix,self.covariance_matrix,self.Qk_matrix)
+            #get the pose of the robot
             self.get_positon(self.wr_speed,self.wl_speed,dt)
-
-            odom_msg = self.get_odometry(current_time,self.x,self.y,self.theta)
-            print(self.theta)
             
-            self.odom_pub.publish(odom_msg)
-    
-            #self.transform(odom_msg)
-    
+
     def run(self):
            # Run the node
            while not rospy.is_shutdown():

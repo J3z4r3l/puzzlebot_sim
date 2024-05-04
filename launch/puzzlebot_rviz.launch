@@ -17,15 +17,15 @@
 
         <!--Joint State Publisher....test nonlinear    -->
         <node name="puzz_sim" pkg="puzzlebot_sim" type="puzzlebot_kinematic_model.py"/>
-
         <node name="localisation" pkg="puzzlebot_sim" type="localisation.py"/>
-
+        
     
         <!--Test Linear 
         <node name="controller" pkg="puzzlebot_sim" type="Control2.py"/>
         <node name="square_trajectory_node" pkg="puzzlebot_sim" type="Control_lazo_abierto.py"/>
         <node name="puzz_sim" pkg="puzzlebot_sim" type="puzzlebot_kinematic_model.py"/>
-
+        <node name="Qk" pkg="puzzlebot_sim" type="Qk.py"/>
+        
         <node name="localisation" pkg="puzzlebot_sim" type="Linealizacion.py"/>
 
     -->

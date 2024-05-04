@@ -35,7 +35,7 @@ def add_matrices(A, B):
     return result
 def multiply_3x2_by_2x2(A, B):
     if len(A[0]) != len(B):
-        raise ValueError("El número de columnas de la matriz A debe ser igual al número de filas de la matriz B")
+        raise ValueError("B")
 
     result = [[0 for _ in range(len(B[0]))] for _ in range(len(A))]
 
@@ -70,15 +70,16 @@ C = [[1, 0, 0],
 D= [[0.5, 0.01, 0.01],
      [0.01, 0.5, 0.01],
      [0.01, 0.01, 0.2]]
+A_2 = [[1, 0, -0.01],
+     [0, 1, 0.1],
+     [0, 0, 1]]
+
 
 # Multiplicar las matrices
-resultado_1 = multiply_matrices(A, B)
-c=transpose_matrix(A)
-resultado_prod= multiply_matrices(resultado_1, c)
-resultado2 = add_matrices(resultado_prod, D)
-cov=get_covariance(A,B,D)
 
-print(resultado2)
+cov=get_covariance(A,B,D)
+cov2=get_covariance(A_2,cov,D)
+print(cov2)
 print("traka")
 print(cov)
 #A*B*A-1
